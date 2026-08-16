@@ -16,6 +16,7 @@ export type PropertyRecord = {
   size: string
   builtSize: string
   landSize: string
+  buildYear: string
   beds: string
   masterBedrooms: string
   baths: string
@@ -83,6 +84,7 @@ export const emptyProperty: PropertyRecord = {
   size: '',
   builtSize: '',
   landSize: '',
+  buildYear: '',
   beds: '',
   masterBedrooms: '',
   baths: '',
@@ -141,6 +143,7 @@ export const propertyFields: PropertyField[] = [
   { key: 'size', label: 'المساحة (م²)', section: 'details', kind: 'number' },
   { key: 'builtSize', label: 'مساحة المباني (م²)', section: 'details', kind: 'number' },
   { key: 'landSize', label: 'مساحة الأرض (م²)', section: 'details', kind: 'number' },
+  { key: 'buildYear', label: 'سنة البناء', section: 'details', kind: 'number' },
   { key: 'beds', label: 'غرف النوم', section: 'details', kind: 'number' },
   { key: 'masterBedrooms', label: 'غرف الماستر', section: 'details', kind: 'number' },
   { key: 'baths', label: 'الحمامات', section: 'details', kind: 'number' },

@@ -69,6 +69,19 @@ test('يفصل مساحة البناء وغرف الماستر عن القيم �
   assert.equal(conflicts.includes('size'), false)
 })
 
+test('يستخرج الطابق وسنة البناء دون خلط سنة البناء مع مساحة المباني', () => {
+  const { record } = parseSmartText(`نوع العقار: شقة سكنية
+المساحة: 145 م²
+الطابق: الثالث
+عدد غرف النوم: 3
+سنة البناء: 2023
+السعر: 2,850,000 جنيه مصري`)
+  assert.equal(record.floor, 'الثالث')
+  assert.equal(record.buildYear, '2023')
+  assert.equal(record.builtSize, '')
+  assert.equal(record.size, '145')
+})
+
 test('يستخرج الواجهة من صيغة صريحة دون خلطها مع الفيو', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي\nالواجهة: بحري شرقي\nفيو مفتوح على اللاندسكيب')
   assert.equal(record.facade, 'بحري')

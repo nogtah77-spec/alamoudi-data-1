@@ -142,7 +142,7 @@ function buildResidualDescription(text: string, record: PropertyRecord) {
   const fieldLabel = /^(?:الكود|كود العقار|العنوان|اسم العقار|النوع|نوع العقار|نوع العملية|الفئة|السعر|المطلوب|المساحة|غرف(?: النوم)?|عدد غرف النوم|حمام(?:ات)?|عدد الحمامات|الحمامات|الدور|عدد الأدوار|نوع الطابق|التشطيب|حالة التشطيب|الفيو|الواجهة|اتجاه(?: العقار)?|الاتجاه|ماستر|أسانسير|يوجد أسانسير|عدد الشرفات|شرفة|يوجد جراج|جراج|العملة|المقدم|المبلغ المتبقي|عدد الأقساط|عدد الأقساط المتبقية|قيمة القسط|دورية السداد|مدة التقسيط|التسليم|موعد التسليم|الحالة|حالة العقار|الحالة القانونية|الموقف من التسجيل|طريقة السداد|قابل للتفاوض|المدينة|المنطقة|الحي|رابط|المعلن|اسم المصدر|رقم المصدر|رقم الهاتف|الهاتف|واتساب|المسوق|اسم المسوق|الموظف المسؤول)\s*(?:[:：-]|$)/i
   const sectionHeading = /^(?:التفاصيل المالية|المميزات والمواصفات|المواصفات|بيانات العقار|الموقع|للتواصل|للتفاصيل|المميزات)\s*:?$/i
   const rawLines = text.split(/\r?\n/).map((line) => line.replace(bullet, '').trim()).filter(Boolean)
-  const lines = rawLines.flatMap((line) => line.split(/[،,](?=\s*(?:الكود|السعر|المساحة|المقدم|المدينة|المنطقة|الحي|الهاتف|المميزات|الواجهة|الاتجاه|قابل\s+للتفاوض)(?:\s*[:：-]|\s))/i))
+  const lines = rawLines.flatMap((line) => line.split(/[،,](?=\s*(?:الكود|السعر|المساحة|المقدم|المدينة|المنطق��|الحي|الهاتف|المميزات|الواجهة|الاتجاه|قابل\s+للتفاوض)(?:\s*[:：-]|\s))/i))
   const residual: string[] = []
   for (const [index, rawLine] of lines.entries()) {
     let line = rawLine.replace(bullet, '').trim().replace(/[.;؛]+$/, '').trim()
@@ -243,8 +243,11 @@ export function parseSmartText(rawText: string): ParseResult {
     if (size.conflict) { detectedFields.push('size_conflict'); conflicts.push('size') }
   }
 
-  const builtSize = matchExplicitNumber(text, /(?:مساحة\s+(?:المباني|البناء)|المباني|البناء)\s*[:：-]?\s*([\d,.٫٠-٩]+)/i)
+  const builtSize = matchExplicitNumber(text, /(?:مساحة\s+(?:المباني|البناء))\s*[:：-]?\s*([\d,.٫٠-٩]+)/i)
   if (builtSize) { record.builtSize = builtSize; detectedFields.push('builtSize') }
+
+  const buildYear = matchExplicitNumber(text, /(?:سنة\s+(?:البناء|الإنشاء)|عام\s+البناء|سنة\s+التشييد)\s*[:：-]?\s*(\d{4})/i)
+  if (buildYear) { record.buildYear = buildYear; detectedFields.push('buildYear') }
 
   const landSize = matchExplicitNumber(text, /(?:مساحة\s+(?:الأرض|الارض)|الأرض|الارض)\s*[:：-]?\s*([\d,.٫٠-٩]+)/i)
   if (landSize) { record.landSize = landSize; detectedFields.push('landSize') }
@@ -291,7 +294,7 @@ export function parseSmartText(rawText: string): ParseResult {
     : matchOption(text, referenceOptions.facades, FACADE_ALIASES)
   if (facade) { record.facade = facade; detectedFields.push('facade') }
 
-  const explicitFloor = text.match(/(?:الدور|دور|رقم\s+الدور)\s*[:：-]?\s*(?:الدور\s+)?([^\n،,\.]+)/i)?.[1]?.trim()
+  const explicitFloor = text.match(/(?:الدور|الطابق|الطابقية|دور|رقم\s+(?:الدور|الطابق))\s*[:：-]?\s*(?:الدور|الطابق)\s+([^\n،,.]+)/i)?.[1]?.trim() || text.match(/(?:الدور|الطابق|الطابقية|دور|رقم\s+(?:الدور|الطابق))\s*[:：-]?\s*([^\n،,.]+)/i)?.[1]?.trim()
   if (explicitFloor) {
     const floorValue = explicitFloor.split(/\s+(?:بفيو|بإطلالة|مع|ويوجد|وبـ)\s+/i)[0].trim()
     record.floor = floorValue
@@ -436,6 +439,7 @@ const HEADER_ALIASES: Record<keyof PropertyRecord, string[]> = {
   price: ['السعر', 'price'],
   size: ['المساحة', 'size'],
   builtSize: ['مساحة المباني', 'مساحة البناء', 'builtSize'],
+  buildYear: ['سنة البناء', 'سنة الإنشاء', 'سنة التشييد', 'buildYear'],
   landSize: ['مساحة الأرض', 'مساحة الارض', 'landSize'],
   beds: ['غرف النوم', 'غرف', 'beds'],
   masterBedrooms: ['غرف الماستر', 'غرف ماستر', 'masterBedrooms'],
