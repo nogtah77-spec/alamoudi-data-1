@@ -50,7 +50,7 @@ export function IntakePanel({
           </span>
           <div>
             <h2 className="text-sm font-bold">رفع ملف العقار</h2>
-            <p className="text-xs text-muted-foreground">Excel، CSV، Word أو ملف نصي</p>
+            <p className="text-xs text-muted-foreground">CSV أو ملف نصي</p>
           </div>
         </header>
 

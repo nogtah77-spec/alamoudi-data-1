@@ -17,7 +17,6 @@
     "ai": "^7.0.66",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "docx": "^9.7.1",
     "drizzle-orm": "^0.45.2",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.16.0",

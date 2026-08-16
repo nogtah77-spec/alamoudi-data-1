@@ -1,19 +1,17 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, Download, FileJson, FileSpreadsheet, FileType } from 'lucide-react'
+import { ChevronDown, Download, FileJson, FileSpreadsheet } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { exportFormatLabels, exportProperty, type ExportFormat } from '@/lib/property/export'
 import type { PropertyRecord } from '@/lib/property/types'
 
 const FORMAT_ICONS: Record<ExportFormat, LucideIcon> = {
-  xlsx: FileSpreadsheet,
   csv: FileSpreadsheet,
   json: FileJson,
-  docx: FileType,
 }
 
-const FORMATS: ExportFormat[] = ['xlsx', 'csv', 'json', 'docx']
+const FORMATS: ExportFormat[] = ['csv', 'json']
 
 export function ExportMenu({ record, disabled }: { record: PropertyRecord; disabled: boolean }) {
   const [open, setOpen] = useState(false)
