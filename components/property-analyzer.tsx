@@ -45,8 +45,15 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
     () => propertyFields.filter((field) => field.required && !record[field.key].trim()),
     [record],
   )
-  const filledCount = useMemo(() => propertyFields.filter((field) => record[field.key].trim()).length, [record])
-  const completion = Math.round((filledCount / propertyFields.length) * 100)
+  const completionFields = [
+    'code', 'title', 'type', 'category', 'price', 'size', 'beds', 'baths',
+    'floor', 'finishing', 'view', 'remainingAmount', 'installmentCount',
+    'installmentAmount', 'installmentFrequency', 'installmentPeriod',
+  ] as const
+  const completion = useMemo(() => {
+    const filled = completionFields.filter((key) => record[key].trim()).length
+    return Math.round((filled / completionFields.length) * 100)
+  }, [record])
 
   function applyRecord(next: PropertyRecord, detected: string[], message: string, conflicts: (keyof PropertyRecord)[] = []) {
     setRecord(next)

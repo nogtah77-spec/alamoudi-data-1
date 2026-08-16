@@ -45,6 +45,10 @@ export type PropertyRecord = {
   dateAdded: string
   currency: string
   downPayment: string
+  remainingAmount: string
+  installmentCount: string
+  installmentAmount: string
+  installmentFrequency: string
   installmentPeriod: string
   deliveryDate: string
   legalStatus: string
@@ -104,6 +108,10 @@ export const emptyProperty: PropertyRecord = {
   dateAdded: '',
   currency: '',
   downPayment: '',
+  remainingAmount: '',
+  installmentCount: '',
+  installmentAmount: '',
+  installmentFrequency: '',
   installmentPeriod: '',
   deliveryDate: '',
   legalStatus: '',
@@ -136,6 +144,10 @@ export const propertyFields: PropertyField[] = [
   { key: 'parkingAvailable', label: 'موقف السيارة', section: 'details', kind: 'select', options: referenceOptions.yesNo },
   { key: 'currency', label: 'العملة', section: 'details', kind: 'select', options: referenceOptions.currencies },
   { key: 'downPayment', label: 'المقدم', section: 'details', kind: 'text', placeholder: 'مثال: 10% أو 500 ألف' },
+  { key: 'remainingAmount', label: 'المبلغ المتبقي', section: 'details', kind: 'text' },
+  { key: 'installmentCount', label: 'عدد الأقساط', section: 'details', kind: 'number' },
+  { key: 'installmentAmount', label: 'قيمة القسط', section: 'details', kind: 'text' },
+  { key: 'installmentFrequency', label: 'دورية السداد', section: 'details', kind: 'text' },
   { key: 'installmentPeriod', label: 'مدة التقسيط', section: 'details', kind: 'text', placeholder: 'مثال: 8 سنوات' },
   { key: 'deliveryDate', label: 'التسليم', section: 'details', kind: 'text', placeholder: 'مثال: فوري أو خلال سنتين' },
   { key: 'legalStatus', label: 'الحالة القانونية', section: 'details', kind: 'text', placeholder: 'مثال: تمليك، عقد ابتدائي، مسجل عقاريًا' },

@@ -246,8 +246,20 @@ export function parseSmartText(rawText: string): ParseResult {
   const downPayment = matchClauseValue(text, DOWN_PAYMENT_KEYWORDS)
   if (downPayment) { record.downPayment = downPayment; detectedFields.push('downPayment') }
 
+  const remainingAmount = text.match(/(?:المبلغ\s+المتبقي|المتبقي)\s*[:：-]?\s*([^\n،]+)/i)?.[1]?.trim()
+  if (remainingAmount) { record.remainingAmount = remainingAmount; detectedFields.push('remainingAmount') }
+
+  const installmentCount = text.match(/(?:المتبقي\s+هو\s*|عدد\s+الأقساط\s*[:：-]?\s*)(\d+)\s*أقساط?/i)?.[1]
+  if (installmentCount) { record.installmentCount = installmentCount; detectedFields.push('installmentCount') }
+
+  const installmentAmount = text.match(/(?:قيمة\s+كل\s+قسط|قيمة\s+القسط)\s*[:：-]?\s*([^\n،]+)/i)?.[1]?.trim()
+  if (installmentAmount) { record.installmentAmount = installmentAmount; detectedFields.push('installmentAmount') }
+
+  const installmentFrequency = text.match(/(?:كل\s+6\s+أشهر|نصف\s+سنوي|ربع\s+سنوي|شهري|سنوي)/i)?.[0]
+  if (installmentFrequency) { record.installmentFrequency = installmentFrequency; detectedFields.push('installmentFrequency') }
+
   const installmentPeriod = matchClauseValue(text, INSTALLMENT_PERIOD_KEYWORDS)
-    || text.match(/(?:إجمالي\s+المدة|مدة\s+الأقساط|مدة\s+التقسيط)[^\n،,]*?(\d+\s*(?:سنة|سنين|سنوات|شهر|شهور|أشهر))/i)?.[1]?.trim()
+    || text.match(/(?:إجمالي\s+المدة|مدة\s+الأقساط|مدة\s+التقسيط)[^\n،.]*?(\d+\s*(?:سنة|سنين|سنوات|شهر|شهور|أشهر))/i)?.[1]?.trim()
   if (installmentPeriod) { record.installmentPeriod = installmentPeriod; detectedFields.push('installmentPeriod') }
 
   const deliveryDate = matchClauseValue(text, DELIVERY_DATE_KEYWORDS)
@@ -340,6 +352,10 @@ const HEADER_ALIASES: Record<keyof PropertyRecord, string[]> = {
   dateAdded: ['تاريخ الإضافة', 'dateAdded'],
   currency: ['العملة', 'currency'],
   downPayment: ['المقدم', 'مقدم', 'downPayment'],
+  remainingAmount: ['المبلغ المتبقي', 'المتبقي', 'remainingAmount'],
+  installmentCount: ['عدد الأقساط', 'installmentCount'],
+  installmentAmount: ['قيمة القسط', 'installmentAmount'],
+  installmentFrequency: ['دورية السداد', 'installmentFrequency'],
   installmentPeriod: ['مدة التقسيط', 'فترة التقسيط', 'installmentPeriod'],
   deliveryDate: ['التسليم', 'موعد التسليم', 'تاريخ التسليم', 'deliveryDate'],
   legalStatus: ['الحالة القانونية', 'legalStatus'],
