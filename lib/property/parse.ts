@@ -1,0 +1,392 @@
+import * as XLSX from 'xlsx'
+import { emptyProperty, referenceOptions, type PropertyRecord } from './types'
+import {
+  CATEGORY_ALIASES,
+  CURRENCY_ALIASES,
+  DELIVERY_DATE_KEYWORDS,
+  detectMarketingClaim,
+  DOWN_PAYMENT_KEYWORDS,
+  extractMarketingClaims,
+  FACADE_ALIASES,
+  FINISHING_ALIASES,
+  FLOOR_ALIASES,
+  INSTALLMENT_PERIOD_KEYWORDS,
+  isNegatedAt,
+  LEGAL_STATUS_TERMS,
+  LISTING_TYPE_ALIASES,
+  matchAssertivePhrase,
+  matchFirstTerm,
+  NEGOTIABLE_KEYWORDS,
+  normalizeForMatch,
+  NOT_NEGOTIABLE_PHRASES,
+  parseHumanNumber,
+  STATUS_ALIASES,
+  TYPE_ALIASES,
+  VIEW_ALIASES,
+  YES_NO_KEYWORDS,
+  type CanonicalMap,
+} from './knowledge-base'
+
+export type ParseResult = {
+  record: PropertyRecord
+  detectedFields: string[]
+  /**
+   * الحقول التي طابقت أكثر من قيمة رقمية مختلفة في النص (مثال: "السعر 1.5
+   * مليون" و"1,600,000 جنيه" في نفس النص). القيمة المعروضة في `record` هي أول
+   * رقم عُثر عليه فقط — التعارض يُحفظ هنا ليُعرض للمستخدم بدل أن يُحسم صمتًا
+   * (Smart Analyzer v2.0: "التعارض يُحفظ لا يُحسم").
+   */
+  conflicts: (keyof PropertyRecord)[]
+}
+
+/**
+ * يبحث عن أول رقم يطابق أحد الأنماط ويُطبّعه (فواصل/أرقام عربية/مضاعفات
+ * "مليون"/"ألف"/"K"/"M"). يعيد أيضًا `conflict: true` إذا طابقت الأنماط أكثر
+ * من قيمة رقمية مختلفة في النص — عندها لا يُحسم الاختيار تلقائيًا، بل يُحفظ
+ * أول رقم موجود مع الإشارة إلى وجود تعارض (Smart Analyzer v2.0: "التعارض يُحفظ لا يُحسم").
+ */
+function matchNumber(text: string, patterns: RegExp[]): { value: string; conflict: boolean } {
+  const found: string[] = []
+  for (const pattern of patterns) {
+    const matches = text.matchAll(new RegExp(pattern, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`))
+    for (const match of matches) {
+      const raw = match[1]
+      if (!raw) continue
+      const parsed = parseHumanNumber(raw)
+      if (parsed === null) continue
+      const normalized = String(parsed)
+      if (!found.includes(normalized)) found.push(normalized)
+    }
+  }
+  if (found.length === 0) return { value: '', conflict: false }
+  return { value: found[0], conflict: found.length > 1 }
+}
+
+/**
+ * مطابقة حقل select بالاعتماد على القيم الأصلية + مرادفات قاعدة المعرفة،
+ * مع وعي كامل بالنفي: أي مطابقة تسبقها أداة نفي (بدون/غير/لا يوجد...) خلال
+ * نافذة قصيرة من الكلمات تُرفض ولا تُستخدم كقيمة للحقل.
+ */
+function matchOption(text: string, options: readonly string[], aliasMaps: CanonicalMap[] = []): string {
+  const normalizedText = normalizeForMatch(text)
+
+  // القيم الأصلية أولاً (أعلى ثقة)
+  for (const option of options) {
+    const idx = normalizedText.indexOf(normalizeForMatch(option))
+    if (idx !== -1 && !isNegatedAt(normalizedText, idx)) return option
+  }
+
+  // ثم مرادفات قاعدة المعرفة، بشرط أن تكون كنيتها من القيم المسموح بها
+  for (const map of aliasMaps) {
+    if (!options.includes(map.canonical)) continue
+    for (const alias of map.aliases) {
+      const idx = normalizedText.indexOf(normalizeForMatch(alias))
+      if (idx !== -1 && !isNegatedAt(normalizedText, idx)) return map.canonical
+    }
+  }
+
+  return ''
+}
+
+/**
+ * يفحص حقول نعم/لا (ماستر/أسانسير/موقف سيارة) عبر كلمات مفتاحية إيجابية.
+ * إن وُجدت الكلمة مسبوقة بأداة نفي تُعتبر "لا"؛ وإن لم توجد أي إشارة إطلاقًا
+ * يبقى الحقل فارغًا (لا افتراض بالسلب أو الإيجاب دون دليل).
+ */
+function matchYesNo(text: string, keywords: readonly string[]): string {
+  const normalizedText = normalizeForMatch(text)
+  for (const keyword of keywords) {
+    const idx = normalizedText.indexOf(normalizeForMatch(keyword))
+    if (idx !== -1) return isNegatedAt(normalizedText, idx) ? 'لا' : 'نعم'
+  }
+  return ''
+}
+
+/**
+ * يستخرج قيمة نصية حرة تلي كلمة مفتاحية (مثل "المقدم: 10%" أو "التسليم فوري")
+ * حتى أول حد بند (فاصلة/سطر جديد)، مع الاحتفاظ بالنص كما ورد دون أي تحويل
+ * (لا تحويل نسبة إلى مبلغ، ولا عبارة نسبية إلى تاريخ تقويمي مخترع). إن كانت
+ * الكلمة المفتاحية نفسها منفية ("بدون مقدم") تُرفض المطابقة ولا تُعاد أي قيمة.
+ */
+function matchClauseValue(text: string, keywords: readonly string[]): string {
+  const normalizedText = normalizeForMatch(text)
+  for (const keyword of keywords) {
+    const pattern = new RegExp(`(?:${keyword})\\s*[:：]?\\s*([^\\n،,]+)`, 'i')
+    const match = pattern.exec(text)
+    if (!match || match.index === undefined) continue
+    const value = match[1]?.trim()
+    if (!value) continue
+    if (isNegatedAt(normalizedText, match.index)) continue
+    return value
+  }
+  return ''
+}
+
+/**
+ * Parses unstructured, free-form Arabic/English property text and extracts
+ * as many structured fields as possible using keyword + pattern matching.
+ */
+export function parseSmartText(rawText: string): ParseResult {
+  const text = rawText.trim()
+  const detectedFields: string[] = []
+  const conflicts: (keyof PropertyRecord)[] = []
+  const record: PropertyRecord = { ...emptyProperty }
+
+  if (!text) return { record, detectedFields, conflicts }
+
+  const firstLine = text.split(/[\n،,]/)[0]?.trim()
+  if (firstLine) {
+    record.title = firstLine
+    detectedFields.push('title')
+  }
+
+  record.features = text
+  // النص الأصلي الكامل كما ورد دون أي إعادة صياغة — تعبئة إضافية فقط، لا تحل
+  // محل features ولا تغيّر سلوكه الحالي (SMART_ANALYZER_SCHEMA_HANDOFF.md §12).
+  record.sourceRawText = text
+
+  const price = matchNumber(text, [
+    /(?:السعر|سعر|price)\s*[:：]?\s*([\d,.٫٠-٩]+(?:\s*(?:مليون|الف|ألف|k|m))?)/i,
+    /([\d,.٫٠-٩]+\s*(?:مليون|الف|ألف))/i,
+    /([\d,]{5,})\s*(?:ريال|جنيه|درهم|SAR|EGP|AED)/i,
+  ])
+  if (price.value) {
+    record.price = price.value
+    detectedFields.push('price')
+    if (price.conflict) { detectedFields.push('price_conflict'); conflicts.push('price') }
+  }
+
+  // العملة — تُطابَق فقط من رمز/اسم صريح، لا تُستنتج من الدولة أو الرقم وحده.
+  const currency = matchOption(text, referenceOptions.currencies, CURRENCY_ALIASES)
+  if (currency) { record.currency = currency; detectedFields.push('currency') }
+
+  const size = matchNumber(text, [
+    /(?:المساحة|مساحة|size)\s*[:：]?\s*([\d,.٫٠-٩]+)\s*(?:م2|م²|متر|sqm|sqft)?/i,
+    /([\d,.٫٠-٩]+)\s*(?:م2|م²|متر مربع|متر|sqm|sqft)/i,
+    // صيغة شائعة جدًا في إعلانات العقارات المصرية: رقم ملتصق مباشرة بحرف "م"
+    // بدون فاصل (مثل "320م")، لا يجوز الخلط بينها وبين "م" كحرف وحيد ملتبس؛
+    // الشرط الملزم هنا هو الالتصاق المباشر برقم وعدم اتباعها بحرف عربي آخر.
+    /([\d,.٫٠-٩]+)\s?م(?![\u0600-\u06FF])/,
+  ])
+  if (size.value) {
+    record.size = size.value
+    detectedFields.push('size')
+    if (size.conflict) { detectedFields.push('size_conflict'); conflicts.push('size') }
+  }
+
+  const beds = matchNumber(text, [
+    /(?:غرف النوم|غرف|beds|bedrooms)\s*[:：]?\s*([\d٠-٩]+)/i,
+    /([\d٠-٩]+)\s*(?:غرف نوم|غرف)/i,
+  ])
+  if (beds.value) {
+    record.beds = beds.value
+    detectedFields.push('beds')
+    if (beds.conflict) { detectedFields.push('beds_conflict'); conflicts.push('beds') }
+  }
+
+  const baths = matchNumber(text, [
+    /(?:الحمامات|حمامات|حمام|baths|bathrooms)\s*[:：]?\s*([\d.٫٠-٩]+)/i,
+    /([\d.٫٠-٩]+)\s*(?:حمامات|حمام)/i,
+  ])
+  if (baths.value) {
+    record.baths = baths.value
+    detectedFields.push('baths')
+    if (baths.conflict) { detectedFields.push('baths_conflict'); conflicts.push('baths') }
+  }
+
+  const type = matchOption(text, referenceOptions.types, TYPE_ALIASES)
+  if (type) { record.type = type; detectedFields.push('type') }
+
+  const finishing = matchOption(text, referenceOptions.finishings, FINISHING_ALIASES)
+  if (finishing) { record.finishing = finishing; detectedFields.push('finishing') }
+
+  const view = matchOption(text, referenceOptions.views, VIEW_ALIASES)
+  if (view) { record.view = view; detectedFields.push('view') }
+
+  const facade = matchOption(text, referenceOptions.facades, FACADE_ALIASES)
+  if (facade) { record.facade = facade; detectedFields.push('facade') }
+
+  const floor = matchOption(text, referenceOptions.floors, FLOOR_ALIASES)
+  if (floor) { record.floor = floor; detectedFields.push('floor') }
+
+  const category = matchOption(text, referenceOptions.categories, CATEGORY_ALIASES)
+  if (category) { record.category = category; detectedFields.push('category') }
+
+  const listingType = matchOption(text, referenceOptions.listingTypes, LISTING_TYPE_ALIASES)
+  if (listingType) { record.listingType = listingType; detectedFields.push('listingType') }
+
+  const status = matchOption(text, referenceOptions.statuses, STATUS_ALIASES)
+  if (status) { record.status = status; detectedFields.push('status') }
+
+  const master = matchYesNo(text, YES_NO_KEYWORDS.master)
+  if (master) { record.master = master; detectedFields.push('master') }
+
+  const elevator = matchYesNo(text, YES_NO_KEYWORDS.elevator)
+  if (elevator) { record.elevator = elevator; detectedFields.push('elevator') }
+
+  const parkingAvailable = matchYesNo(text, YES_NO_KEYWORDS.parkingAvailable)
+  if (parkingAvailable) { record.parkingAvailable = parkingAvailable; detectedFields.push('parkingAvailable') }
+
+  // شروط الدفع/التسليم المعلنة — تُحفظ حرفيًا كما وردت، دون تحويل نسبة إلى
+  // مبلغ أو عبارة نسبية إلى تاريخ تقويمي مخترع (SMART_ANALYZER_SCHEMA_HANDOFF.md §6).
+  const downPayment = matchClauseValue(text, DOWN_PAYMENT_KEYWORDS)
+  if (downPayment) { record.downPayment = downPayment; detectedFields.push('downPayment') }
+
+  const installmentPeriod = matchClauseValue(text, INSTALLMENT_PERIOD_KEYWORDS)
+  if (installmentPeriod) { record.installmentPeriod = installmentPeriod; detectedFields.push('installmentPeriod') }
+
+  const deliveryDate = matchClauseValue(text, DELIVERY_DATE_KEYWORDS)
+  if (deliveryDate) { record.deliveryDate = deliveryDate; detectedFields.push('deliveryDate') }
+
+  // الحالة القانونية — نص حر من عبارات معروفة، وليس enum؛ لا تُعتبر ادعاء
+  // المعلن تحققًا قانونيًا موثقًا.
+  const legalStatus = matchFirstTerm(text, LEGAL_STATUS_TERMS)
+  if (legalStatus) { record.legalStatus = legalStatus; detectedFields.push('legalStatus') }
+
+  // قابلية التفاوض — لا تُستنتج من كلمات مثل "لقطة"/"مميز"، فقط من تصريح صريح.
+  const negotiable = matchYesNo(text, NEGOTIABLE_KEYWORDS)
+    || (matchAssertivePhrase(text, NOT_NEGOTIABLE_PHRASES) ? 'لا' : '')
+  if (negotiable) { record.negotiable = negotiable; detectedFields.push('negotiable') }
+
+  // ادعاءات تسويقية — اقتباسات حرفية فقط (Claim وليست Fact)؛ لا تتحول لأي رقم
+  // أو حقل حقيقي مثل ROI. تبقى features كما هي دون أي تغيير.
+  const marketingClaims = extractMarketingClaims(text)
+  if (marketingClaims.length > 0) {
+    record.marketingClaims = marketingClaims.join('؛ ')
+    detectedFields.push('marketingClaims')
+  }
+
+  // (?<![\u0600-\u06FFA-Za-z]) يمنع مطابقة الكلمة المفتاحية عند ظهورها كجزء
+  // من كلمة أطول (مثل "حي" داخل "أحيانًا")، إذ لا تفصل \b بين حرفين عربيين.
+  const region = text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المنطقة|منطقة|region)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()
+  if (region) { record.region = region; detectedFields.push('region') }
+
+  const city = matchOption(text, referenceOptions.cities)
+    || text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المدينة|مدينة|city)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()
+  if (city) { record.city = city; detectedFields.push('city') }
+
+  const district = text.match(/(?<![\u0600-\u06FFA-Za-z])(?:الحي|حي|district)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()
+  if (district) { record.district = district; detectedFields.push('district') }
+
+  
+  const locationUrl = text.match(/(https?:\/\/(?:www\.)?(?:maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl)[^\s]+)/i)?.[1]
+  if (locationUrl) { record.locationUrl = locationUrl; detectedFields.push('locationUrl') }
+
+  const videoUrl = text.match(/(https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be|tiktok\.com)[^\s]+)/i)?.[1]
+  if (videoUrl) { record.videoUrl = videoUrl; detectedFields.push('videoUrl') }
+
+  const listingUrl = text.match(/(https?:\/\/[^\s]+)/g)?.find((url) => url !== locationUrl && url !== videoUrl)
+  if (listingUrl) { record.listingUrl = listingUrl; detectedFields.push('listingUrl') }
+
+  const phone = text.match(/(?:رقم المصدر|رقم التواصل|جوال|هاتف)\s*[:：]?\s*(\+?\d[\d\s-]{6,})/i)?.[1]?.trim()
+  if (phone) { record.sourceNumber = phone; detectedFields.push('sourceNumber') }
+
+  // إشارة تعريفية فقط (metadata) — لا تُنشئ ولا تُعدّل أي حقل بيانات. تدل فقط
+  // على أن النص يحتوي على عبارة ادعاء/تسويق معروفة (مثل "آخر وحدة بالسعر
+  // الحالي")، والتي تبقى محفوظة حرفيًا داخل features دون تحويلها إلى حقيقة.
+  if (detectMarketingClaim(text)) detectedFields.push('marketing_claim_detected')
+
+  return { record, detectedFields, conflicts }
+}
+
+const HEADER_ALIASES: Record<keyof PropertyRecord, string[]> = {
+  code: ['الكود', 'كود', 'code'],
+  title: ['العنوان', 'اسم العقار', 'title'],
+  price: ['السعر', 'price'],
+  size: ['المساحة', 'size'],
+  beds: ['غرف النوم', 'غرف', 'beds'],
+  baths: ['الحمامات', 'baths'],
+  floor: ['الدور', 'floor'],
+  floorType: ['نوع الطابق', 'floorType'],
+  master: ['ماستر', 'master'],
+  elevator: ['أسانسير', 'elevator'],
+  finishing: ['التشطيب', 'finishing'],
+  view: ['الفيو', 'view'],
+  facade: ['الواجهة', 'facade'],
+  parkingAvailable: ['موقف السيارة', 'parkingAvailable'],
+  features: ['الوصف والمميزات', 'مميزات إضافية', 'المميزات', 'الوصف', 'features'],
+  category: ['الفئة', 'category'],
+  status: ['حالة العقار', 'الحالة', 'status'],
+  featured: ['مميز', 'featured'],
+  listingType: ['نوع العرض', 'نوع الطرح', 'listingType'],
+  type: ['نوع العقار', 'النوع', 'type'],
+  region: ['المنطقة', 'region'],
+  city: ['المدينة', 'city'],
+  district: ['الحي', 'district'],
+  locationUrl: ['رابط الموقع (خرائط)', 'رابط الموقع', 'رابط اللوكيشن', 'locationUrl'],
+  listingUrl: ['رابط الإعلان', 'listingUrl'],
+  videoUrl: ['رابط الفيديو', 'videoUrl'],
+  images: ['روابط الصور (مفصولة بفاصلة)', 'الصور', 'images'],
+  sourceName: ['اسم المصدر', 'sourceName'],
+  sourceNumber: ['رقم المصدر', 'sourceNumber'],
+  sourceLocation: ['موقع المصدر', 'sourceLocation'],
+  sourceDescription: ['وصف المصدر', 'sourceDescription'],
+  responsibleEmployee: ['الموظف المسؤول', 'اسم الموظف المسؤول', 'responsibleEmployee'],
+  dateAdded: ['تاريخ الإضافة', 'dateAdded'],
+  currency: ['العملة', 'currency'],
+  downPayment: ['المقدم', 'مقدم', 'downPayment'],
+  installmentPeriod: ['مدة التقسيط', 'فترة التقسيط', 'installmentPeriod'],
+  deliveryDate: ['التسليم', 'موعد التسليم', 'تاريخ التسليم', 'deliveryDate'],
+  legalStatus: ['الحالة القانونية', 'legalStatus'],
+  negotiable: ['قابل للتفاوض', 'التفاوض', 'negotiable'],
+  marketingClaims: ['ادعاءات تسويقية', 'الادعاءات التسويقية', 'marketingClaims'],
+  sourceRawText: ['النص الأصلي الكامل', 'النص الأصلي', 'sourceRawText'],
+}
+
+function findColumnValue(row: Record<string, unknown>, keys: string[]): string {
+  const entry = Object.entries(row).find(
+    ([key, value]) => keys.some((candidate) => key.trim() === candidate) && value !== '' && value !== null && value !== undefined,
+  )
+  return entry ? String(entry[1]).trim() : ''
+}
+
+/**
+ * Parses a spreadsheet file (xlsx, xls, csv) into one or more structured
+ * property records, matching Arabic/English column headers.
+ */
+export async function parseSpreadsheetFile(file: File): Promise<PropertyRecord[]> {
+  const isCsvOrText = /\.(csv|txt)$/i.test(file.name)
+
+  // CSV/TXT files must be decoded as UTF-8 text first, otherwise Arabic
+  // headers and values get mangled when read as a raw binary buffer.
+  const workbook = isCsvOrText
+    ? XLSX.read(await file.text(), { type: 'string', cellDates: true, raw: true })
+    : XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true })
+
+  const sheet = workbook.Sheets[workbook.SheetNames[0]]
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
+
+  return rows.map((row) => {
+    const record: PropertyRecord = { ...emptyProperty }
+    for (const key of Object.keys(HEADER_ALIASES) as (keyof PropertyRecord)[]) {
+      const value = findColumnValue(row, HEADER_ALIASES[key])
+      if (value) record[key] = value
+    }
+    return record
+  })
+}
+
+/**
+ * Extracts plain text from a Word (.docx) file so it can be run through the
+ * same smart-text parser used for pasted text.
+ */
+export async function extractTextFromDocx(file: File): Promise<string> {
+  const mammoth = await import('mammoth')
+  const buffer = await file.arrayBuffer()
+  const result = await mammoth.extractRawText({ arrayBuffer: buffer })
+  return result.value
+}
+
+export function readPlainTextFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result ?? ''))
+    reader.onerror = () => reject(new Error('text_read_failed'))
+    reader.readAsText(file, 'utf-8')
+  })
+}
+
+export const SPREADSHEET_EXTENSIONS = ['.xlsx', '.xls', '.csv']
+export const TEXT_EXTENSIONS = ['.txt']
+export const DOCX_EXTENSIONS = ['.docx']
+export const SUPPORTED_EXTENSIONS = [...SPREADSHEET_EXTENSIONS, ...TEXT_EXTENSIONS, ...DOCX_EXTENSIONS]
