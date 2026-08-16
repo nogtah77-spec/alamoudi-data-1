@@ -31,6 +31,7 @@ export function IntakePanel({
   activeAgentName,
 }: IntakePanelProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const smartTextRef = useRef<HTMLTextAreaElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
@@ -107,6 +108,7 @@ export function IntakePanel({
           </div>
         </header>
         <textarea
+          ref={smartTextRef}
           value={smartText}
           onChange={(event) => onSmartTextChange(event.target.value)}
           placeholder="مثال: شقة 180 متر بالتجمع الخامس، 3 غرف وحمامين، السعر 1,850,000، فيو مفتوح، تشطيب سوبر لوكس..."
@@ -116,8 +118,8 @@ export function IntakePanel({
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
-            onClick={() => onAnalyzeText(smartText)}
-            disabled={!smartText.trim() || isProcessing || isAiProcessing}
+            onClick={() => onAnalyzeText(smartTextRef.current?.value ?? smartText)}
+            disabled={isProcessing || isAiProcessing}
             className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-border text-sm font-bold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Sparkles size={16} />
