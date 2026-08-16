@@ -5,9 +5,7 @@ import {
   CITY_ALIASES,
   CURRENCY_ALIASES,
   DELIVERY_DATE_KEYWORDS,
-  detectMarketingClaim,
   DOWN_PAYMENT_KEYWORDS,
-  extractMarketingClaims,
   FACADE_ALIASES,
   FINISHING_ALIASES,
   FLOOR_ALIASES,
@@ -128,6 +126,25 @@ function matchClauseValue(text: string, keywords: readonly string[]): string {
   return ''
 }
 
+function buildResidualDescription(text: string, record: PropertyRecord) {
+  const extractedValues = new Set(
+    Object.entries(record)
+      .filter(([key, value]) => key !== 'title' && key !== 'features' && key !== 'sourceRawText' && value)
+      .map(([, value]) => String(value).trim()),
+  )
+  const fieldLabels = /^(?:الكود|كود العقار|العنوان|اسم العقار|النوع|نوع العقار|الفئة|السعر|المطلوب|المساحة|غرف(?: النوم)?|حمام(?:ات)?|الحمامات|الدور|نوع الطابق|التشطيب|الفيو|الواجهة|اتجاه(?: العقار)?|ماستر|أسانسير|موقف السيارة|العملة|المقدم|المبلغ المتبقي|عدد الأقساط|قيمة القسط|دورية السداد|مدة التقسيط|التسليم|الحالة القانونية|قابل للتفاوض|المدينة|المنطقة|الحي|رابط|المعلن|اسم المصدر|رقم المصدر|الموظف المسؤول)\s*[:：-]/i
+  const sectionHeadings = /^(?:التفاصيل المالية|المميزات والمواصفات|المواصفات|بيانات العقار|العنوان|الموقع|للتواصل|للتفاصيل)\s*:?[\s]*$/i
+  const lines = text.split(/[\r\n،,]/).map((line) => line.replace(/^\s*[-•*▪◦✅✨📍🏢📐🏠💰]+\s*/, '').trim()).filter(Boolean)
+  const residual = lines.filter((line) => {
+    if (sectionHeadings.test(line) || fieldLabels.test(line)) return false
+    if (/^(?:المقدم|السعر|المطلوب|العملة|المساحة|غرف|غرفة|حمام|الحمامات|الدور|الفيو|الواجهة|التشطيب|التسليم|التفاوض|قابل للتفاوض)/i.test(line)) return false
+    if (/^(?:شقة|شقه|فيلا|استوديو|أستوديو|مكتب|محل)\s+(?:للبيع|للإيجار|للايجار|for\s+(?:sale|rent))?\s*$/i.test(line)) return false
+    if (/^(?:https?:\/\/|واتساب|تواصل|اتصل|للاتصال)/i.test(line)) return false
+    return !extractedValues.has(line)
+  })
+  return residual.length ? residual.map((line) => `• ${line}`).join('\n') : ''
+}
+
 /**
  * Parses unstructured, free-form Arabic/English property text and extracts
  * as many structured fields as possible using keyword + pattern matching.
@@ -153,7 +170,6 @@ export function parseSmartText(rawText: string): ParseResult {
     detectedFields.push('title')
   }
 
-  record.features = text
   const code = matchExplicitCode(text)
   if (code) { record.code = code; detectedFields.push('code') }
 
@@ -300,14 +316,6 @@ export function parseSmartText(rawText: string): ParseResult {
     || (matchAssertivePhrase(text, NOT_NEGOTIABLE_PHRASES) ? 'لا' : '')
   if (negotiable) { record.negotiable = negotiable; detectedFields.push('negotiable') }
 
-  // ادعاءات تسويقية — اقتباسات حرفية فقط (Claim وليست Fact)؛ لا تتحول لأي رقم
-  // أو حقل حقيقي مثل ROI. تبقى features كما هي دون أي تغيير.
-  const marketingClaims = extractMarketingClaims(text)
-  if (marketingClaims.length > 0) {
-    record.marketingClaims = marketingClaims.join('؛ ')
-    detectedFields.push('marketingClaims')
-  }
-
   // (?<![\u0600-\u06FFA-Za-z]) يمنع مطابقة الكلمة المفتاحية عند ظهورها كجزء
   // من كلمة أطول (مثل "حي" داخل "أحيانًا")، إذ لا تفصل \b بين حرفين عربيين.
   // الموقع الداخلي: نقرأ المنطقة كسطر مستقل أولًا، ثم ندعم "منطقة B12" داخل أي سطر.
@@ -362,10 +370,8 @@ export function parseSmartText(rawText: string): ParseResult {
   const responsibleEmployee = text.match(/(?:اسم\s+المسوق|المسوق|الموظف\s+المسؤول)\s*[:：-]?\s*([^\n،,]+)/i)?.[1]?.trim()
   if (responsibleEmployee) { record.responsibleEmployee = responsibleEmployee; detectedFields.push('responsibleEmployee') }
 
-  // إشارة تعريفية فقط (metadata) — لا تُنشئ ولا تُعدّل أي حقل بيانات. تدل فقط
-  // على أن النص يحتوي على عبارة ادعاء/تسويق معروفة (مثل "آخر وحدة بالسعر
-  // الحالي")، والتي تبقى محفوظة حرفيًا داخل features دون تحويلها إلى حقيقة.
-  if (detectMarketingClaim(text)) detectedFields.push('marketing_claim_detected')
+  record.features = buildResidualDescription(text, record)
+  if (record.features) detectedFields.push('features')
 
   return { record, detectedFields, conflicts }
 }
@@ -414,7 +420,6 @@ const HEADER_ALIASES: Record<keyof PropertyRecord, string[]> = {
   deliveryDate: ['التسليم', 'موعد التسليم', 'تاريخ التسليم', 'deliveryDate'],
   legalStatus: ['الحالة القانونية', 'legalStatus'],
   negotiable: ['قابل للتفاوض', 'التفاوض', 'negotiable'],
-  marketingClaims: ['ادعاءات تسويقية', 'الادعاءات التسويقية', 'marketingClaims'],
   sourceRawText: ['النص الأصلي الكامل', 'النص الأصلي', 'sourceRawText'],
 }
 

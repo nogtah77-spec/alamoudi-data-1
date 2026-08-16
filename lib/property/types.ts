@@ -53,7 +53,6 @@ export type PropertyRecord = {
   deliveryDate: string
   legalStatus: string
   negotiable: string
-  marketingClaims: string
   sourceRawText: string
 }
 
@@ -116,7 +115,6 @@ export const emptyProperty: PropertyRecord = {
   deliveryDate: '',
   legalStatus: '',
   negotiable: '',
-  marketingClaims: '',
   sourceRawText: '',
 }
 
@@ -152,7 +150,6 @@ export const propertyFields: PropertyField[] = [
   { key: 'legalStatus', label: 'الحالة القانونية', section: 'details', kind: 'text', placeholder: 'مثال: تمليك، عقد ابتدائي، مسجل عقاريًا' },
   { key: 'negotiable', label: 'قابل للتفاوض', section: 'details', kind: 'select', options: referenceOptions.yesNo },
   { key: 'features', label: 'الوصف والمميزات', section: 'details', kind: 'textarea' },
-  { key: 'marketingClaims', label: 'ادعاءات تسويقية', hint: 'اقتباسات من النص، ليست حقائق موثقة', section: 'details', kind: 'textarea' },
 
   { key: 'city', label: 'المدينة', section: 'location', kind: 'select', options: referenceOptions.cities },
   { key: 'region', label: 'المنطقة', hint: 'داخل المدينة', section: 'location', kind: 'text', required: true },

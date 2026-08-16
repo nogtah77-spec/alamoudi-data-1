@@ -59,11 +59,10 @@ test('يستخرج negotiable = لا من عبارة "السعر نهائي"', (
   assert.equal(record.negotiable, 'لا')
 })
 
-test('يستخرج marketingClaims كاقتباس حرفي دون تحويله لرقم', () => {
-  const { record, detectedFields } = parseSmartText('شقة للبيع، آخر وحدة متاحة بالمشروع')
-  assert.match(record.marketingClaims, /آخر\s*وحدة/)
-  assert.ok(detectedFields.includes('marketingClaims'))
-  assert.ok(detectedFields.includes('marketing_claim_detected'))
+test('يضع العبارات غير المستخرجة داخل الوصف والمميزات فقط', () => {
+  const { record } = parseSmartText('شقة للبيع، آخر وحدة متاحة بالمشروع')
+  assert.match(record.features, /آخر\s*وحدة/)
+  assert.equal('marketingClaims' in record, false)
 })
 
 test('يحفظ sourceRawText مطابقًا للنص الأصلي دون إعادة صياغة', () => {
@@ -146,17 +145,17 @@ test('downPayment/installmentPeriod/deliveryDate: تبقى فارغة عند غ�
 // 5) التعارضات وعدم اختراع claims كحقائق
 // ---------------------------------------------------------------------------
 
-test('marketingClaims: "عائد مضمون 15%" لا تتحول إلى حقل رقمي roi', () => {
+test('العبارات التسويقية تبقى ضمن الوصف ولا تتحول إلى حقول', () => {
   const { record } = parseSmartText('شقة للبيع، عائد مضمون 15% سنويًا، فرصة استثمارية')
-  assert.match(record.marketingClaims, /عائد\s*مضمون/)
-  assert.equal((record as unknown as Record<string, unknown>).roi, undefined)
+  assert.match(record.features, /عائد\s*مضمون/)
+  assert.equal((record as unknown as Record<string, unknown>).marketingClaims, undefined)
 })
 
-test('marketingClaims: يجمع أكثر من ادعاء دون فقدان أي منها', () => {
+test('يجمع الوصف غير المستخرج مرتبًا دون تكرار الحقول', () => {
   const { record } = parseSmartText('آخر وحدة متاحة، عائد مضمون 20%، أفضل موقع بالمنطقة')
-  assert.match(record.marketingClaims, /آخر\s*وحدة/)
-  assert.match(record.marketingClaims, /عائد\s*مضمون/)
-  assert.match(record.marketingClaims, /أفضل\s*موقع/)
+  assert.match(record.features, /آخر\s*وحدة/)
+  assert.match(record.features, /عائد\s*مضمون/)
+  assert.match(record.features, /أفضل\s*موقع/)
 })
 
 test('نص مختلط عربي/إنجليزي: يستخرج الحقول الثمانية معًا دون تعارض بينها', () => {
@@ -177,7 +176,7 @@ test('نص مختلط عربي/إنجليزي: يستخرج الحقول الث�
   assert.equal(record.deliveryDate, 'خلال سنتين')
   assert.equal(record.legalStatus, 'تمليك')
   assert.equal(record.negotiable, 'نعم')
-  assert.match(record.marketingClaims, /آخر\s*وحدة/)
+  assert.match(record.features, /آخر\s*وحدة/)
   assert.equal(record.sourceRawText, text)
 })
 
@@ -190,10 +189,11 @@ test('floorType لا يتأثر بالحقول الجديدة (يبقى فارغ
   assert.equal(record.floorType, '')
 })
 
-test('features يظهر النص الكامل كما كان دون أي تغيير في السلوك السابق', () => {
+test('features يحتوي فقط على المحتوى المتبقي بعد استخراج الحقول', () => {
   const raw = 'شقة للبيع، المقدم 10%، آخر وحدة، السعر قابل للتفاوض'
   const { record } = parseSmartText(raw)
-  assert.equal(record.features, raw)
-  // sourceRawText يطابق features في نفس المدخل (تعبئة إضافية لا استبدال)
-  assert.equal(record.sourceRawText, record.features)
+  assert.match(record.features, /آخر وحدة/)
+  assert.doesNotMatch(record.features, /المقدم 10%/)
+  assert.doesNotMatch(record.features, /السعر قابل للتفاوض/)
+  assert.equal(record.sourceRawText, raw)
 })
