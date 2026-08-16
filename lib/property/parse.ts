@@ -157,12 +157,28 @@ function buildResidualDescription(text: string, record: PropertyRecord) {
   return residual.length ? residual.map((line) => `• ${line}`).join('\n') : ''
 }
 
+function normalizeAnalyzerText(rawText: string) {
+  let text = rawText
+    .replace(/^\s*(?:[-•*▪◦✅✨📍🏢📐🏠💰]+)\s*/gm, '')
+    .trim()
+
+  // بعض الإعلانات تلصق الأرقام كسطور منفصلة: 250 ثم 000 جنيه.
+  // نعيد تجميعها قبل تشغيل أي مستخرج للحقول.
+  let previous = ''
+  while (previous !== text) {
+    previous = text
+    text = text.replace(/(\d)\s*\n\s*(\d{3})(?=\s*(?:جنيه|جنيه مصري|ريال|درهم|$))/g, '$1$2')
+  }
+  return text
+}
+
 /**
  * Parses unstructured, free-form Arabic/English property text and extracts
  * as many structured fields as possible using keyword + pattern matching.
  */
 export function parseSmartText(rawText: string): ParseResult {
-  const text = rawText.trim()
+  const sourceText = rawText.trim()
+  const text = normalizeAnalyzerText(sourceText)
   const detectedFields: string[] = []
   const conflicts: (keyof PropertyRecord)[] = []
   const record: PropertyRecord = { ...emptyProperty }
@@ -187,7 +203,7 @@ export function parseSmartText(rawText: string): ParseResult {
 
   // النص الأصلي الكامل كما ورد دون أي إعادة صياغة — تعبئة إضافية فقط، لا تحل
   // محل features ولا تغيّر سلوكه الحالي (SMART_ANALYZER_SCHEMA_HANDOFF.md §12).
-  record.sourceRawText = text
+  record.sourceRawText = sourceText
 
   const requestedPriceText = text.match(/(?:المطلوب|السعر\s+المطلوب|asking\s+price)\s*[:：-]?\s*([^\n،]+)/i)?.[1] ?? ''
   const price = requestedPriceText
@@ -397,7 +413,7 @@ const HEADER_ALIASES: Record<keyof PropertyRecord, string[]> = {
   baths: ['الحمامات', 'baths'],
   floor: ['الدور', 'floor'],
   floorType: ['نوع الطابق', 'floorType'],
-  master: ['ماستر', 'master'],
+  master: ['ماست��', 'master'],
   elevator: ['أسانسير', 'elevator'],
   finishing: ['التشطيب', 'finishing'],
   view: ['الفيو', 'view'],
