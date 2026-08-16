@@ -98,6 +98,13 @@ export function IntakePanel({
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            const text = smartTextRef.current?.value ?? smartText
+            if (text.trim()) onAnalyzeText(text)
+          }}
+        >
         <header className="mb-4 flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-lg bg-accent/15 text-accent-foreground">
             <Sparkles size={17} strokeWidth={2.2} />
@@ -117,8 +124,7 @@ export function IntakePanel({
         />
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <button
-            type="button"
-            onClick={() => onAnalyzeText(smartTextRef.current?.value ?? smartText)}
+            type="submit"
             disabled={isProcessing || isAiProcessing}
             className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-border text-sm font-bold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
           >
@@ -148,6 +154,7 @@ export function IntakePanel({
             </>
           )}
         </p>
+        </form>
       </section>
     </div>
   )
