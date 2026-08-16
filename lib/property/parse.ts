@@ -173,7 +173,7 @@ function normalizeAnalyzerText(rawText: string) {
   let previous = ''
   while (previous !== text) {
     previous = text
-    text = text.replace(/(\d)\s*\n\s*(\d{3})(?=\s*(?:جنيه|جنيه مصري|ريال|درهم|$|\n))/g, '$1$2')
+    text = text.replace(/(\d|[٠-٩])\s*\r?\n\s*(\d{3}|[٠-٩]{3})/g, '$1$2')
   }
   return text
 }
@@ -243,6 +243,12 @@ export function parseSmartText(rawText: string): ParseResult {
     if (size.conflict) { detectedFields.push('size_conflict'); conflicts.push('size') }
   }
 
+  const builtSize = matchExplicitNumber(text, /(?:مساحة\s+(?:المباني|البناء)|المباني|البناء)\s*[:：-]?\s*([\d,.٫٠-٩]+)/i)
+  if (builtSize) { record.builtSize = builtSize; detectedFields.push('builtSize') }
+
+  const landSize = matchExplicitNumber(text, /(?:مساحة\s+(?:الأرض|الارض)|الأرض|الارض)\s*[:：-]?\s*([\d,.٫٠-٩]+)/i)
+  if (landSize) { record.landSize = landSize; detectedFields.push('landSize') }
+
   const explicitBeds = matchExplicitNumber(text, /(?:عدد\s+غرف\s+النوم|غرف\s+النوم)\s*[:：-]\s*([\d٠-٩]+)/i)
   const beds = explicitBeds
     ? { value: explicitBeds, conflict: false }
@@ -255,6 +261,9 @@ export function parseSmartText(rawText: string): ParseResult {
     detectedFields.push('beds')
     if (beds.conflict) { detectedFields.push('beds_conflict'); conflicts.push('beds') }
   }
+
+  const masterBedrooms = matchExplicitNumber(text, /(?:منها|منهم|عدد\s+غرف\s+الماستر|غرف\s+الماستر|غرف\s+ماستر)\s*[:：-]?\s*([\d٠-٩]+)/i)
+  if (masterBedrooms) { record.masterBedrooms = masterBedrooms; detectedFields.push('masterBedrooms') }
 
   const baths = matchNumber(text, [
     /(?:الحمامات|حمامات|حمام|baths|bathrooms)\s*[:：]?\s*([\d.٫٠-٩]+)/i,
@@ -289,8 +298,21 @@ export function parseSmartText(rawText: string): ParseResult {
     detectedFields.push('floor')
   }
 
+  const floorCountMatch = text.match(/(?:عدد\s+(?:الطوابق|الأدوار)|عدد\s+الأدوار|floors?)\s*[:：-]?\s*([\d٠-٩]+)/i)
+  if (floorCountMatch?.[1]) {
+    const floorCount = parseHumanNumber(floorCountMatch[1])
+    if (floorCount !== null && floorCount !== undefined) { record.floorCount = String(floorCount); detectedFields.push('floorCount') }
+  }
+
   const floorType = matchOption(text, referenceOptions.floors, FLOOR_ALIASES)
   if (floorType) { record.floorType = floorType; detectedFields.push('floorType') }
+
+  const roofMatch = text.match(/(?:يوجد\s+)?(?:روف|الروف|roof)(?:\s*(?:[:：-]|مساحته|مساحة)\s*([\d,.٫٠-٩]+)\s*(?:م2|م²|متر)?|\s*[:：-]?\s*(نعم|موجود))?/i)
+  if (roofMatch) {
+    const roofArea = roofMatch[1] ? parseHumanNumber(roofMatch[1]) : null
+    record.roof = roofArea !== null && roofArea !== undefined ? String(roofArea) : 'نعم'
+    detectedFields.push('roof')
+  }
 
   const category = matchOption(text, referenceOptions.categories, CATEGORY_ALIASES)
   if (category) { record.category = category; detectedFields.push('category') }
@@ -413,10 +435,15 @@ const HEADER_ALIASES: Record<keyof PropertyRecord, string[]> = {
   title: ['العنوان', 'اسم العقار', 'title'],
   price: ['السعر', 'price'],
   size: ['المساحة', 'size'],
+  builtSize: ['مساحة المباني', 'مساحة البناء', 'builtSize'],
+  landSize: ['مساحة الأرض', 'مساحة الارض', 'landSize'],
   beds: ['غرف النوم', 'غرف', 'beds'],
+  masterBedrooms: ['غرف الماستر', 'غرف ماستر', 'masterBedrooms'],
   baths: ['الحمامات', 'baths'],
   floor: ['الدور', 'floor'],
+  floorCount: ['عدد الطوابق', 'عدد الأدوار', 'floorCount'],
   floorType: ['نوع الطابق', 'floorType'],
+  roof: ['روف', 'الروف', 'roof'],
   master: ['ماست��', 'master'],
   elevator: ['أسانسير', 'elevator'],
   finishing: ['التشطيب', 'finishing'],

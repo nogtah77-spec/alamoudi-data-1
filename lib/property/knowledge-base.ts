@@ -185,7 +185,6 @@ export const FLOOR_ALIASES: CanonicalMap[] = buildMap(
     { canonical: 'متكرر', aliases: ['دور متكرر', 'طابق متكرر', 'دور وسط'] },
     { canonical: 'أخير', aliases: ['الدور الأخير', 'الطابق الأخير', 'أعلى دور', 'top floor', 'last floor'] },
     { canonical: 'بدروم', aliases: ['البدروم', 'دور بدروم', 'قطعة بدروم', 'basement'] },
-    { canonical: 'روف', aliases: ['الروف', 'دور روف', 'روف مستقل', 'roof'] },
     { canonical: 'دوبلكس', aliases: ['دوبلكس', 'دوبليكس', 'duplex'] },
   ],
   referenceOptions.floors,
@@ -240,9 +239,9 @@ export const LISTING_TYPE_ALIASES: CanonicalMap[] = buildMap(
 export const CURRENCY_ALIASES: CanonicalMap[] = buildMap(
   [
     { canonical: 'جنيه مصري', aliases: ['جنيه مصرى', 'جنيه', 'ج.م', 'ج م', 'EGP', 'LE'] },
-    { canonical: 'دولار أمر��كي', aliases: ['الدولار الأمريكي', 'دولار امريكي', 'دولار', 'USD', '$'] },
+    { canonical: 'دولار أمر����كي', aliases: ['الدولار الأمريكي', 'دولار امريكي', 'دولار', 'USD', '$'] },
     { canonical: 'ريال سعودي', aliases: ['ريال سعودى', 'ريال', 'SAR'] },
-    { canonical: 'درهم إماراتي', aliases: ['درهم اماراتي', 'درهم', 'AED'] },
+    { canonical: 'درهم إمارات��', aliases: ['درهم اماراتي', 'درهم', 'AED'] },
     { canonical: 'يورو', aliases: ['EUR', '€'] },
   ],
   referenceOptions.currencies,
@@ -370,7 +369,7 @@ export const DELIVERY_DATE_KEYWORDS = [
 /**
  * عبارات الحالة القانونية/الملكية المعروفة في السوق العقاري — نص حر وليس enum
  * (§6 من الـhandoff). مرتّبة من الأكثر تحديدًا إلى الأعم لتفضيل العبارة الكاملة
- * عند وجودها. لا تُعتبر ادعاء المعلن تحققًا قانونيًا موث��ًا.
+ * عند وجودها. لا تُعتبر ادعاء المعلن تحققًا قانونيًا موث���ًا.
  */
 export const LEGAL_STATUS_TERMS = [
   'مسجل عقاريا بالكامل',

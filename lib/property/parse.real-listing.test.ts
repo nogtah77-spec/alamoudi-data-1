@@ -42,12 +42,21 @@ test('يحلل إعلانًا غنيًا دون خلط المبلغ المتبق
 })
 
 test('يستخرج الحقول المسبوقة بنقاط ويحافظ على القيم المالية', () => {
-  const { record } = parseSmartText('• السعر: 250\\n• 000 جنيه مصري\\n• المساحة: 175 م²\\n• الدور: الثالث\\n• المقدم: 250\\n• 000 جنيه\\n• قيمة القسط: 25\\n• 000 جنيه\\n• الحي: المرحلة الثالثة\\n• الموقف من التسجيل: قابل للتسجيل')
+  const { record } = parseSmartText(`• السعر: 250
+• 000 جنيه مصري
+• المساحة: 175 م²
+• الدور: الثالث
+• المقدم: 250
+• 000 جنيه
+• قيمة القسط: 25
+• 000 جنيه
+• الحي: المرحلة الثالثة
+• الموقف من التسجيل: قابل للتسجيل`)
   assert.equal(record.price, '250,000')
   assert.equal(record.size, '175')
   assert.equal(record.floor, 'الثالث')
   assert.match(record.downPayment, /250000/)
-  assert.match(record.installmentAmount, /250000/)
+  assert.match(record.installmentAmount, /25000/)
   assert.equal(record.district, 'المرحلة الثالثة')
   assert.equal(record.legalStatus, 'قابل للتسجيل')
 })
