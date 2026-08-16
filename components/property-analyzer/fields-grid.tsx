@@ -41,8 +41,7 @@ export function FieldsGrid({ record, detectedFields, conflictFields = [], onChan
                       )}
                       {isDetected && !isConflicted && (
                         <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
-                          <BadgeCheck size={11} strokeWidth={2.4} />
-                          مستخرج
+                          <BadgeCheck size={12} strokeWidth={2.5} aria-label="مستخرج" />
                         </span>
                       )}
                       {isConflicted && (
