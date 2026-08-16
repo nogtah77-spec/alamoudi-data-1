@@ -228,10 +228,15 @@ export function parseSmartText(rawText: string): ParseResult {
   const facade = matchOption(text, referenceOptions.facades, FACADE_ALIASES)
   if (facade) { record.facade = facade; detectedFields.push('facade') }
 
-  const explicitFloor = text.match(/(?:الدور|الطابق)\s*[:：-]?\s*(الدور\s+)?([^\n،,]+)/i)?.[2]?.trim()
-  const floor = matchOption(text, referenceOptions.floors, FLOOR_ALIASES)
-    || (explicitFloor ? explicitFloor.replace(/\s+/g, ' ').trim() : '')
-  if (floor) { record.floor = floor; detectedFields.push('floor') }
+  const explicitFloor = text.match(/(?:الدور|دور|رقم\s+الدور)\s*[:：-]?\s*(?:الدور\s+)?([^\n،,\.]+)/i)?.[1]?.trim()
+  if (explicitFloor) {
+    const floorValue = explicitFloor.split(/\s+(?:بفيو|بإطلالة|مع|ويوجد|وبـ)\s+/i)[0].trim()
+    record.floor = floorValue
+    detectedFields.push('floor')
+  }
+
+  const floorType = matchOption(text, referenceOptions.floors, FLOOR_ALIASES)
+  if (floorType) { record.floorType = floorType; detectedFields.push('floorType') }
 
   const category = matchOption(text, referenceOptions.categories, CATEGORY_ALIASES)
   if (category) { record.category = category; detectedFields.push('category') }
@@ -253,10 +258,15 @@ export function parseSmartText(rawText: string): ParseResult {
 
   // شروط الدفع/التسليم المعلنة — تُحفظ حرفيًا كما وردت، دون تحويل نسبة إلى
   // مبلغ أو عبارة نسبية إلى تاريخ تقويمي مخترع (SMART_ANALYZER_SCHEMA_HANDOFF.md §6).
-  const downPayment = text.match(/(?:المقدم|مقدم|down\s*payment)\s*[:：-]?\s*([^\n]+)/i)?.[1]
-    ?.split(/(?=المبلغ\s+المتبقي|عدد\s+الأقساط|قيمة\s+القسط|دورية\s+السداد|مدة\s+التقسيط)/i)[0]
-    ?.trim()
-  if (downPayment) { record.downPayment = downPayment; detectedFields.push('downPayment') }
+  const downPaymentMatch = text.match(/(?:المقدم|مقدم|down\s*payment)\s*[:：-]?\s*([^\n]+)/i)?.[1]
+  const downPayment = downPaymentMatch
+    ?.split(/(?=المبلغ\s+المتبقي|عدد\s+الأقساط|قيمة\s+القسط|دورية\s+السداد|مدة\s+التقسيط|التسليم)/i)[0]
+    ?.replace(/[،,؛;]+\s*$/, '')
+    .trim()
+  if (downPayment && !/^(?:بدون|من\s+دون|لا\s+يوجد)\s+مقدم$/i.test(downPayment)) {
+    record.downPayment = downPayment
+    detectedFields.push('downPayment')
+  }
 
   const remainingAmount = text.match(/(?:المبلغ\s+المتبقي|المتبقي)\s*[:：-]?\s*([^\n،]+)/i)?.[1]?.trim()
   if (remainingAmount) { record.remainingAmount = remainingAmount; detectedFields.push('remainingAmount') }
@@ -300,7 +310,11 @@ export function parseSmartText(rawText: string): ParseResult {
   const explicitRegion = text.match(/(?:المنطقة|region)\s*[:：-]\s*([^\n،,]+)/i)?.[1]?.trim()
   const region = explicitRegion
     || (text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المنطقة|منطقة|region)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim() ?? '')
-  if (region) { record.region = region; detectedFields.push('region') }
+  const normalizedRegion = region.trim()
+  if (normalizedRegion && !/^(?:شرق\s+القاهرة|east\s+cairo)$/i.test(normalizedRegion)) {
+    record.region = normalizedRegion
+    detectedFields.push('region')
+  }
 
   const city = matchOption(text, referenceOptions.cities, CITY_ALIASES)
     || text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المدينة|مدينة|city)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()

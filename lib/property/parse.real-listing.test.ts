@@ -28,6 +28,7 @@ test('يحلل إعلانًا غنيًا دون خلط المبلغ المتبق
   assert.equal(record.type, 'شقة')
   assert.equal(record.category, 'بيع')
   assert.equal(record.floor, 'أرضي')
+  assert.equal(record.floorType, 'أرضي')
   assert.equal(record.view, 'فيو جنينة')
   assert.equal(record.finishing, 'سوبر لوكس')
   assert.equal(record.installmentPeriod, '5 سنوات')
@@ -38,6 +39,14 @@ test('يحلل إعلانًا غنيًا دون خلط المبلغ المتبق
   assert.ok(detectedFields.includes('code'))
   assert.ok(detectedFields.includes('price'))
   assert.equal(record.sourceRawText, listing.trim())
+})
+
+test('يفصل بين رقم الدور ونوع الطابق ولا يملأ شرق القاهرة كمنطقة', () => {
+  const { record } = parseSmartText('شقة للبيع، المدينة: مدينتي، المنطقة: شرق القاهرة، الدور: الدور الثالث، دور متكرر بفيو مفتوح')
+  assert.equal(record.city, 'مدينتي')
+  assert.equal(record.region, '')
+  assert.equal(record.floor, 'الثالث')
+  assert.equal(record.floorType, 'متكرر')
 })
 
 test('لا يلتقط رقم الأقساط أو القسط ككود أو سعر', () => {
