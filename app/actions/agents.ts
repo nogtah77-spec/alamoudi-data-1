@@ -41,8 +41,20 @@ function toSafeAgent(row: typeof aiAgents.$inferSelect): SafeAgent {
 }
 
 export async function listAgents(): Promise<SafeAgent[]> {
-  const rows = await db.select().from(aiAgents).orderBy(aiAgents.createdAt)
-  return rows.map(toSafeAgent)
+  const timeout = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error('Agent query timed out')), 1500)
+  })
+
+  try {
+    const rows = await Promise.race([
+      db.select().from(aiAgents).orderBy(aiAgents.createdAt),
+      timeout,
+    ])
+    return rows.map(toSafeAgent)
+  } catch (error) {
+    console.error('[v0] Failed to load agents:', error)
+    return []
+  }
 }
 
 export async function createAgent(input: AgentFormInput): Promise<SafeAgent> {
