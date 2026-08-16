@@ -41,6 +41,17 @@ test('يحلل إعلانًا غنيًا دون خلط المبلغ المتبق
   assert.equal(record.sourceRawText, listing.trim())
 })
 
+test('يستخرج الحقول المسبوقة بنقاط ويحافظ على القيم المالية', () => {
+  const { record } = parseSmartText('• السعر: 250\\n• 000 جنيه مصري\\n• المساحة: 175 م²\\n• الدور: الثالث\\n• المقدم: 250\\n• 000 جنيه\\n• قيمة القسط: 25\\n• 000 جنيه\\n• الحي: المرحلة الثالثة\\n• الموقف من التسجيل: قابل للتسجيل')
+  assert.equal(record.price, '250,000')
+  assert.equal(record.size, '175')
+  assert.equal(record.floor, 'الثالث')
+  assert.match(record.downPayment, /250000/)
+  assert.match(record.installmentAmount, /250000/)
+  assert.equal(record.district, 'المرحلة الثالثة')
+  assert.equal(record.legalStatus, 'قابل للتسجيل')
+})
+
 test('يستخرج الواجهة من صيغة صريحة دون خلطها مع الفيو', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي\nالواجهة: بحري شرقي\nفيو مفتوح على اللاندسكيب')
   assert.equal(record.facade, 'بحري')

@@ -149,8 +149,6 @@ export const propertyFields: PropertyField[] = [
   { key: 'deliveryDate', label: 'التسليم', section: 'details', kind: 'text', placeholder: 'مثال: فوري أو خلال سنتين' },
   { key: 'legalStatus', label: 'الحالة القانونية', section: 'details', kind: 'text', placeholder: 'مثال: تمليك، عقد ابتدائي، مسجل عقاريًا' },
   { key: 'negotiable', label: 'قابل للتفاوض', section: 'details', kind: 'select', options: referenceOptions.yesNo },
-  { key: 'features', label: 'الوصف والمميزات', section: 'details', kind: 'textarea' },
-
   { key: 'city', label: 'المدينة', section: 'location', kind: 'select', options: referenceOptions.cities },
   { key: 'region', label: 'المنطقة', hint: 'داخل المدينة', section: 'location', kind: 'text', required: true },
   { key: 'district', label: 'الحي', hint: 'داخل المدينة', section: 'location', kind: 'text', required: true },

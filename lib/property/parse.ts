@@ -45,7 +45,7 @@ export type ParseResult = {
  * أول رقم موجود مع الإشارة إلى وجود تعارض (Smart Analyzer v2.0: "التعارض يُحفظ لا يُحسم").
  */
 function matchExplicitCode(text: string): string {
-  const match = text.match(/(?:الكود|كود|code|رقم\s+(?:الوحدة|العقار))\s*[:：-]?\s*([A-Za-zА-Яа-яء-ي][A-Za-zА-Яа-яء-ي0-9_-]{1,19}|\d{2,20})/i)
+  const match = text.match(/(?:الكود|كود|code|رقم\s+(?:الوحدة|العقار))\s*[:：-]?\s*([A-Za-zА-Яа-яء-ي][A-Za-zА-Яа-яء-ي0-9_-]{1,19}|\d{2,20})/i) || text.match(/(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?([A-Z]{1,3}\s*[-/]?\s*\d{1,3})\s*$/im)
   return match?.[1]?.trim() ?? ''
 }
 
@@ -167,7 +167,7 @@ function normalizeAnalyzerText(rawText: string) {
   let previous = ''
   while (previous !== text) {
     previous = text
-    text = text.replace(/(\d)\s*\n\s*(\d{3})(?=\s*(?:جنيه|جنيه مصري|ريال|درهم|$))/g, '$1$2')
+    text = text.replace(/(\d)\s*\n\s*(\d{3})(?=\s*(?:جنيه|جنيه مصري|ريال|درهم|$|\n))/g, '$1$2')
   }
   return text
 }
@@ -206,19 +206,17 @@ export function parseSmartText(rawText: string): ParseResult {
   record.sourceRawText = sourceText
 
   const requestedPriceText = text.match(/(?:المطلوب|السعر\s+المطلوب|asking\s+price)\s*[:：-]?\s*([^\n،]+)/i)?.[1] ?? ''
-  const price = requestedPriceText
-    ? matchNumber(requestedPriceText, [
-        /([\d,.٫٠-٩]+(?:\s*(?:مليون|الف|ألف|k|m))?)/i,
-      ])
+  const explicitPriceMatch = text.match(/(?:السعر\s+المطلوب|المطلوب|السعر|سعر|price)\s*[:：-]?\s*([\d,.٫٠-٩]+(?:\s*\n\s*\d{3})*(?:\s*(?:مليون|الف|ألف|k|m))?)/i)
+  const price = explicitPriceMatch
+    ? { value: String(parseHumanNumber(explicitPriceMatch[1]) ?? ''), conflict: false }
     : matchNumber(text, [
-        /(?:السعر|سعر|price)\s*[:：]?\s*([\d,.٫٠-٩]+(?:\s*(?:مليون|الف|ألف|k|m))?)/i,
         /([\d,.٫٠-٩]+\s*(?:مليون|الف|ألف))/i,
         /([\d,]{5,})\s*(?:ريال|جنيه|درهم|SAR|EGP|AED)/i,
       ])
   if (price.value) {
     record.price = Number(price.value).toLocaleString('en-US')
     detectedFields.push('price')
-    if (price.conflict) { detectedFields.push('price_conflict'); conflicts.push('price') }
+    // القيمة الصريحة بعد اسم الحقل هي المصدر الموثوق، لذلك لا نعرض تعارضًا من أرقام أخرى في الإعلان.
   }
 
   // العملة — تُطابَق فقط من رمز/اسم صريح، ل���� تُستنتج من الدولة أو الرقم وحده.
@@ -305,7 +303,7 @@ export function parseSmartText(rawText: string): ParseResult {
 
   // شروط الدفع/التسليم المعلنة — تُحفظ حرفيًا كما وردت، دون تحويل نسبة إلى
   // مبلغ أو عبارة نسبية إلى تاريخ تقويمي مخترع (SMART_ANALYZER_SCHEMA_HANDOFF.md §6).
-  const downPaymentMatch = text.match(/(?:المقدم|مقدم|down\s*payment)\s*[:：-]?\s*([^\n]+)/i)?.[1]
+  const downPaymentMatch = text.match(/(?:المقدم|مقدم|down\s*payment)\s*[:：-]?\s*([\d,.٫٠-٩]+(?:\s*\n\s*\d{3})*[^\n]*)/i)?.[1]
   const downPayment = downPaymentMatch
     ?.split(/(?=المبلغ\s+المتبقي|عدد\s+الأقساط|قيمة\s+القسط|دورية\s+السداد|مدة\s+التقسيط|التسليم)/i)[0]
     ?.replace(/[،,؛;]+\s*$/, '')
@@ -321,7 +319,7 @@ export function parseSmartText(rawText: string): ParseResult {
   const installmentCount = text.match(/(?:المتبقي\s+هو\s*|عدد\s+الأقساط(?:\s+المتبقية)?\s*[:：-]?\s*)(\d+)\s*أقساط?/i)?.[1]
   if (installmentCount) { record.installmentCount = installmentCount; detectedFields.push('installmentCount') }
 
-  const installmentAmount = text.match(/(?:قيمة\s+كل\s+قسط|قيمة\s+القسط)\s*[:：-]?\s*([^\n،]+)/i)?.[1]?.trim()
+  const installmentAmount = text.match(/(?:قيمة\s+كل\s+قسط|قيمة\s+القسط)\s*[:：-]?\s*([\d,.٫٠-٩]+(?:\s*\n\s*\d{3})*[^\n،]*)/i)?.[1]?.trim() || text.match(/(?:القسط)\s*[:：-]?\s*([^\n،]+)/i)?.[1]?.trim()
   if (installmentAmount) { record.installmentAmount = installmentAmount; detectedFields.push('installmentAmount') }
 
   const installmentFrequency = text.match(/(?:كل\s+6\s+أشهر|نصف\s+سنوي|ربع\s+سنوي|شهري|سنوي)/i)?.[0]
@@ -336,7 +334,7 @@ export function parseSmartText(rawText: string): ParseResult {
 
   // الحالة القانونية — نص حر من عبارات معروفة، وليس enum؛ لا تُعتبر ادعاء
   // المعلن تحققًا قانونيًا موثقًا.
-  const legalStatus = matchFirstTerm(text, LEGAL_STATUS_TERMS)
+  const legalStatus = text.match(/(?:الموقف\s+من\s+التسجيل|الحالة\s+القانونية|التسجيل)\s*[:：-]?\s*([^\n،,]+)/i)?.[1]?.trim() || matchFirstTerm(text, LEGAL_STATUS_TERMS)
   if (legalStatus) { record.legalStatus = legalStatus; detectedFields.push('legalStatus') }
 
   // قابلية التفاوض — لا تُستنتج من كلمات مثل "لقطة"/"مميز"، فقط من تصريح صريح.
@@ -397,9 +395,6 @@ export function parseSmartText(rawText: string): ParseResult {
 
   const responsibleEmployee = text.match(/(?:اسم\s+المسوق|المسوق|الموظف\s+المسؤول)\s*[:：-]?\s*([^\n،,]+)/i)?.[1]?.trim()
   if (responsibleEmployee) { record.responsibleEmployee = responsibleEmployee; detectedFields.push('responsibleEmployee') }
-
-  record.features = buildResidualDescription(text, record)
-  if (record.features) detectedFields.push('features')
 
   return { record, detectedFields, conflicts }
 }
