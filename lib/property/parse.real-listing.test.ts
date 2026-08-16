@@ -52,6 +52,14 @@ test('يستخرج الحقول المسبوقة بنقاط ويحافظ على 
   assert.equal(record.legalStatus, 'قابل للتسجيل')
 })
 
+test('يفصل مساحة البناء وغرف الماستر عن القيم الأساسية دون تعارض', () => {
+  const { record, conflicts } = parseSmartText('عدد غرف النوم: 3\nمنها 3 غرف ماستر\nالمساحة: 420 م²\nمساحة البناء: 315 م²')
+  assert.equal(record.beds, '3')
+  assert.equal(record.size, '420')
+  assert.equal(conflicts.includes('beds'), false)
+  assert.equal(conflicts.includes('size'), false)
+})
+
 test('يستخرج الواجهة من صيغة صريحة دون خلطها مع الفيو', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي\nالواجهة: بحري شرقي\nفيو مفتوح على اللاندسكيب')
   assert.equal(record.facade, 'بحري')

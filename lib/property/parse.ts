@@ -49,6 +49,12 @@ function matchExplicitCode(text: string): string {
   return match?.[1]?.trim() ?? ''
 }
 
+function matchExplicitNumber(text: string, pattern: RegExp): string {
+  const match = text.match(pattern)
+  const parsed = match?.[1] ? parseHumanNumber(match[1]) : null
+  return parsed === null || parsed === undefined ? '' : String(parsed)
+}
+
 function matchNumber(text: string, patterns: RegExp[]): { value: string; conflict: boolean } {
   const found: string[] = []
   for (const pattern of patterns) {
@@ -223,24 +229,27 @@ export function parseSmartText(rawText: string): ParseResult {
   const currency = matchOption(text, referenceOptions.currencies, CURRENCY_ALIASES)
   if (currency) { record.currency = currency; detectedFields.push('currency') }
 
-  const size = matchNumber(text, [
-    /(?:المساحة|مساحة|size)\s*[:：]?\s*([\d,.٫٠-٩]+)\s*(?:م2|م²|متر|sqm|sqft)?/i,
-    /([\d,.٫٠-٩]+)\s*(?:م2|م²|متر مربع|متر|sqm|sqft)/i,
-    // صيغة شائعة جدًا في إعلانات العقارات المصرية: رقم ملتصق مباشرة بحرف "م"
-    // بدون فاصل (مثل "320م")، لا يجوز الخلط بينها وبين "م" كحرف وحي�� ملتبس؛
-    // الشرط الملزم هنا هو الالتصاق المباشر برقم وعدم اتباعها بحرف عربي آخر.
-    /([\d,.٫٠-٩]+)\s?م(?![\u0600-\u06FF])/,
-  ])
+  const explicitSize = matchExplicitNumber(text, /(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?المساحة\s*[:：-]\s*([\d,.٫٠-٩]+)/im)
+  const size = explicitSize
+    ? { value: explicitSize, conflict: false }
+    : matchNumber(text, [
+        /(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?المساحة\s*[:：-]\s*([\d,.٫٠-٩]+)/im,
+        /([\d,.٫٠-٩]+)\s*(?:م2|م²|متر مربع|متر|sqm|sqft)/i,
+        /([\d,.٫٠-٩]+)\s?م(?![\u0600-\u06FF])/,
+      ])
   if (size.value) {
     record.size = size.value
     detectedFields.push('size')
     if (size.conflict) { detectedFields.push('size_conflict'); conflicts.push('size') }
   }
 
-  const beds = matchNumber(text, [
-    /(?:غرف النوم|غرف|beds|bedrooms)\s*[:：]?\s*([\d٠-٩]+)/i,
-    /([\d٠-٩]+)\s*(?:غرف نوم|غرف)/i,
-  ])
+  const explicitBeds = matchExplicitNumber(text, /(?:عدد\s+غرف\s+النوم|غرف\s+النوم)\s*[:：-]\s*([\d٠-٩]+)/i)
+  const beds = explicitBeds
+    ? { value: explicitBeds, conflict: false }
+    : matchNumber(text, [
+        /(?:غرف النوم|beds|bedrooms)\s*[:：-]?\s*([\d٠-٩]+)/i,
+        /([\d٠-٩]+)\s*(?:غرف نوم|غرف)(?!\s*ماستر)/i,
+      ])
   if (beds.value) {
     record.beds = beds.value
     detectedFields.push('beds')
