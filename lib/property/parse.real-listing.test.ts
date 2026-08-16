@@ -82,6 +82,20 @@ test('يستخرج الطابق وسنة البناء دون خلط سنة ال�
   assert.equal(record.size, '145')
 })
 
+test('يستخرج عدد طوابق العمارة ولا يكرر الكود في المنطقة ويدعم وسيط وسمسار', () => {
+  const { record } = parseSmartText(`S 500
+الموقع: مدينة بدر، الحي الخامس
+الطابق: الثالث
+عدد طوابق العمارة: 5 طوابق
+وسيط
+بروكر
+سمسار`)
+  assert.equal(record.floorCount, '5')
+  assert.equal(record.floor, 'الثالث')
+  assert.equal(record.region, '')
+  assert.equal(record.listingType, 'وسيط')
+})
+
 test('يستخرج الواجهة من صيغة صريحة دون خلطها مع الفيو', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي\nالواجهة: بحري شرقي\nفيو مفتوح على اللاندسكيب')
   assert.equal(record.facade, 'بحري')
