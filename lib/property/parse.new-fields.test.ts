@@ -12,7 +12,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { parseSmartText } from './parse.ts'
+import { parseSmartText } from './parse'
 
 // ---------------------------------------------------------------------------
 // 1) الحالات الأساسية — استخراج مباشر لكل حقل من عبارة صريحة

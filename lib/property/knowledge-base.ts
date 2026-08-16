@@ -29,7 +29,7 @@
  *    يبقى محفوظًا دومًا في حقل features.
  */
 
-import { referenceOptions } from './types.ts'
+import { referenceOptions } from './types'
 
 // ---------------------------------------------------------------------------
 // 1) تطبيع النص العربي للمطابقة فقط (لا يُستخدم لتغيير القيمة المخزَّنة)
@@ -185,6 +185,13 @@ export const FLOOR_ALIASES: CanonicalMap[] = buildMap(
     { canonical: 'دوبلكس', aliases: ['دوبلكس', 'دوبليكس', 'duplex'] },
   ],
   referenceOptions.floors,
+)
+
+export const CITY_ALIASES: CanonicalMap[] = buildMap(
+  [
+    { canonical: 'كمباوند وصال', aliases: ['كمبوند وصال', 'Compound Wesal', 'Compound Wasl', 'Wesal Compound', 'Wasl Compound'] },
+  ],
+  referenceOptions.cities,
 )
 
 export const CATEGORY_ALIASES: CanonicalMap[] = buildMap(

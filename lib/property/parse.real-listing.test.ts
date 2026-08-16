@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { parseSmartText } from './parse.ts'
+import { parseSmartText } from './parse'
 
 const listing = `🏢 شقة لقطة للبيع - وصال ريزدنس
 📐 المساحة: 160 م²

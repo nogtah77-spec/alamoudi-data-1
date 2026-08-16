@@ -37,3 +37,16 @@ test('يستخرج المنطقة والمدينة معًا دون تعارض ف
   assert.equal(record.city, 'مدينة الشروق')
   assert.equal(record.region, 'التجمع الخامس')
 })
+
+test('يستخرج كمباوند وصال كمدينة ويحتفظ باسم المشروع كعنوان', () => {
+  const { record } = parseSmartText('شقة لقطة للبيع - وصال ريزدنس، كمبوند وصال، الحي الثالث')
+  assert.equal(record.title, 'وصال ريزدنس')
+  assert.equal(record.city, 'كمباوند وصال')
+  assert.equal(record.district, 'الثالث')
+})
+
+test('يدعم الاسم الإنجليزي Compound Wesal كمرادف للمدينة', () => {
+  const { record } = parseSmartText('Apartment for sale - Wesal Residence, Compound Wesal')
+  assert.equal(record.city, 'كمباوند وصال')
+  assert.equal(record.title, 'Wesal Residence')
+})

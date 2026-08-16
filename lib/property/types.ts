@@ -68,7 +68,7 @@ export const referenceOptions = {
   views: ['جنينة خاصة', 'فيو مفتوح', 'فيو جنينة', 'باركنج', 'فيو نادي + جنينة'],
   facades: ['أمامي', 'خلفي', 'خلفي جانبي'],
   yesNo: ['نعم', 'لا'],
-  cities: ['مدينة الشروق', 'مدينتي', 'بدر', 'هليوبليس الجديدة', 'التجمع', 'بيت الوطن', 'مدينة نصر'],
+  cities: ['مدينة الشروق', 'كمباوند وصال', 'مدينتي', 'بدر', 'هليوبليس الجديدة', 'التجمع', 'بيت الوطن', 'مدينة نصر'],
   currencies: ['جنيه مصري', 'دولار أمريكي', 'ريال سعودي', 'درهم إماراتي', 'يورو'],
 } as const
 
@@ -164,7 +164,6 @@ export const propertyFields: PropertyField[] = [
   { key: 'sourceNumber', label: 'رقم المصدر', section: 'source', kind: 'text' },
   { key: 'sourceLocation', label: 'موقع المصدر', section: 'source', kind: 'text' },
   { key: 'sourceDescription', label: 'وصف المصدر', section: 'source', kind: 'textarea' },
-  { key: 'sourceRawText', label: 'النص الأصلي الكامل', hint: 'كما ورد دون إعادة صياغة', section: 'source', kind: 'textarea' },
   { key: 'responsibleEmployee', label: 'الموظف المسؤول', section: 'source', kind: 'text' },
 
   { key: 'listingUrl', label: 'رابط الإعلان', section: 'media', kind: 'text' },

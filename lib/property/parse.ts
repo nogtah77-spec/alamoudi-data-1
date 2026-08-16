@@ -1,7 +1,8 @@
 import * as XLSX from 'xlsx'
-import { emptyProperty, referenceOptions, type PropertyRecord } from './types.ts'
+import { emptyProperty, referenceOptions, type PropertyRecord } from './types'
 import {
   CATEGORY_ALIASES,
+  CITY_ALIASES,
   CURRENCY_ALIASES,
   DELIVERY_DATE_KEYWORDS,
   detectMarketingClaim,
@@ -25,7 +26,7 @@ import {
   VIEW_ALIASES,
   YES_NO_KEYWORDS,
   type CanonicalMap,
-} from './knowledge-base.ts'
+} from './knowledge-base'
 
 export type ParseResult = {
   record: PropertyRecord
@@ -140,8 +141,14 @@ export function parseSmartText(rawText: string): ParseResult {
   if (!text) return { record, detectedFields, conflicts }
 
   const firstLine = text.split(/[\n،,]/)[0]?.trim()
-  if (firstLine) {
-    record.title = firstLine
+  const projectTitle = text.match(/(?:وصال\s+(?:ريزدنس|فيوز)|Wesal\s+(?:Residence|Views?)|Wasl\s+(?:Residence|Views?))/i)?.[0]?.trim()
+  const cleanedTitle = projectTitle || firstLine
+    ?.replace(/^(?:🏢\s*)?(?:شقة|شقه|فيلا|استوديو|أستوديو|مكتب|محل)\s*/i, '')
+    .replace(/\s*(?:للبيع|للإيجار|للايجار|for\s+(?:sale|rent))\s*/i, ' ')
+    .replace(/\s*[-–—:]\s*$/, '')
+    .trim()
+  if (cleanedTitle) {
+    record.title = cleanedTitle
     detectedFields.push('title')
   }
 
@@ -288,12 +295,23 @@ export function parseSmartText(rawText: string): ParseResult {
   const region = text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المنطقة|منطقة|region)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()
   if (region) { record.region = region; detectedFields.push('region') }
 
-  const city = matchOption(text, referenceOptions.cities)
+  const city = matchOption(text, referenceOptions.cities, CITY_ALIASES)
     || text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المدينة|مدينة|city)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()
   if (city) { record.city = city; detectedFields.push('city') }
 
+  if (!record.city && /(?:مدينة\s+الشروق|new\s+shorouk)/i.test(text)) {
+    record.city = 'مدينة الشروق'
+    detectedFields.push('city')
+  }
+
+  const districtFromLocation = text.match(/(?:مدينة\s+الشروق|new\s+shorouk)\s+(?:الحي|حي)\s+([^\n،,]+)/i)?.[1]?.trim()
+  if (!record.district && districtFromLocation) {
+    record.district = districtFromLocation
+    detectedFields.push('district')
+  }
+
   const district = text.match(/(?<![\u0600-\u06FFA-Za-z])(?:الحي|حي|district)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()
-  if (district) { record.district = district; detectedFields.push('district') }
+  if (district && !record.district) { record.district = district; detectedFields.push('district') }
 
   
   const locationUrl = text.match(/(https?:\/\/(?:www\.)?(?:maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl)[^\s]+)/i)?.[1]
