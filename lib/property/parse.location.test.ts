@@ -50,3 +50,10 @@ test('يدعم الاسم الإنجليزي Compound Wesal كمرادف للم�
   assert.equal(record.city, 'كمباوند وصال')
   assert.equal(record.title, 'Wesal Residence')
 })
+
+test('يعتبر وصال وحدها أو مع اسم المشروع كمباوند وصال', () => {
+  for (const text of ['شقة للبيع - وصال', 'شقة للبيع - وصال ريزدنس', 'شقة للبيع - وصال فيوز']) {
+    const { record } = parseSmartText(text)
+    assert.equal(record.city, 'كمباوند وصال')
+  }
+})

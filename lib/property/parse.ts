@@ -176,7 +176,7 @@ export function parseSmartText(rawText: string): ParseResult {
     if (price.conflict) { detectedFields.push('price_conflict'); conflicts.push('price') }
   }
 
-  // العملة — تُطابَق فقط من رمز/اسم صريح، لا تُستنتج من الدولة أو الرقم وحده.
+  // العملة — تُطابَق فقط من رمز/اسم صريح، ل�� تُستنتج من الدولة أو الرقم وحده.
   const currency = matchOption(text, referenceOptions.currencies, CURRENCY_ALIASES)
   if (currency) { record.currency = currency; detectedFields.push('currency') }
 
@@ -297,6 +297,7 @@ export function parseSmartText(rawText: string): ParseResult {
 
   const city = matchOption(text, referenceOptions.cities, CITY_ALIASES)
     || text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المدينة|مدينة|city)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()
+    || (/(?:وصال|wesal|wasl)/i.test(text) ? 'كمباوند وصال' : '')
   if (city) { record.city = city; detectedFields.push('city') }
 
   if (!record.city && /(?:مدينة\s+الشروق|new\s+shorouk)/i.test(text)) {
