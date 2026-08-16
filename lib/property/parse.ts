@@ -309,9 +309,11 @@ export function parseSmartText(rawText: string): ParseResult {
   // من كلمة أطول (مثل "حي" داخل "أحيانًا")، إذ لا تفصل \b بين حرفين عربيين.
   // الموقع الداخلي: نقرأ المنطقة كسطر مستقل أولًا، ثم ندعم "منطقة B12" داخل أي سطر.
   // fallback الأكواد مهم لإعلانات مدينتي التي تذكر B12 دون كلمة "منطقة".
-  const regionLabel = /(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s*$|[،,])/i.exec(text)?.[1]?.trim()
   const regionCode = /(?:^|[\s\n\r،,؛;:()-])([A-Z]{1,3}\s*[-/]?\s*\d{1,3})(?=$|[\s\n\r،,؛;:.])/im.exec(text)?.[1]?.replace(/\s+/g, '')
-  const region = regionLabel || regionCode || ''
+  const regionCandidates = Array.from(text.matchAll(/(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s*$|[،,])/gi))
+    .map((match) => match[1].trim())
+    .filter((value) => value && !/^(?:شرق\s+القاهرة|east\s+cairo|هادئة|هادئ|رئيسية|مميزة)$/i.test(value))
+  const region = regionCode || regionCandidates[0] || ''
   const normalizedRegion = region.trim()
   if (normalizedRegion && !/^(?:شرق\s+القاهرة|east\s+cairo)$/i.test(normalizedRegion)) {
     record.region = normalizedRegion
