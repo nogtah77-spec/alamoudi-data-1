@@ -89,3 +89,9 @@ test('يستخرج B12 حتى عندما تسبقها شرطة أو رمز', () 
   assert.equal(record.city, 'مدينتي')
   assert.equal(record.region, 'B12')
 })
+
+test('يستخرج كود المنطقة B12 حتى بدون كلمة منطقة', () => {
+  const { record } = parseSmartText('شقة للبيع في مدينتي\nB12\nالمساحة: 175 م²')
+  assert.equal(record.city, 'مدينتي')
+  assert.equal(record.region, 'B12')
+})

@@ -307,9 +307,12 @@ export function parseSmartText(rawText: string): ParseResult {
 
   // (?<![\u0600-\u06FFA-Za-z]) يمنع مطابقة الكلمة المفتاحية عند ظهورها كجزء
   // من كلمة أطول (مثل "حي" داخل "أحيانًا")، إذ لا تفصل \b بين حرفين عربيين.
-  const explicitRegion = text.match(/(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,]+)/im)?.[1]?.trim()
-  const region = explicitRegion
-    || (text.match(/(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s*$|[،,])/i)?.[1]?.trim() ?? '')
+  // الموقع الداخلي: نقرأ المنطقة كسطر مستقل أولًا، ثم ندعم "منطقة B12" داخل أي سطر.
+  // fallback الأكواد مهم لإعلانات مدينتي التي تذكر B12 دون كلمة "منطقة".
+  const regionLine = text.match(/(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,]+)/im)?.[1]?.trim()
+  const regionInline = text.match(/(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s*$|[،,])/i)?.[1]?.trim()
+  const regionCode = /(?:مدينتي|madinaty)[\s\S]{0,180}?\b([A-Z]{1,3}\s*[-/]?\s*\d{1,3})\b/i.exec(text)?.[1]?.replace(/\s+/g, '')
+  const region = regionLine || regionInline || regionCode || ''
   const normalizedRegion = region.trim()
   if (normalizedRegion && !/^(?:شرق\s+القاهرة|east\s+cairo)$/i.test(normalizedRegion)) {
     record.region = normalizedRegion
