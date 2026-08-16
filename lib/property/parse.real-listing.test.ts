@@ -21,7 +21,7 @@ const listing = `🏢 شقة لقطة للبيع - وصال ريزدنس
 test('يحلل إعلانًا غنيًا دون خلط المبلغ المتبقي بالمطلوب', () => {
   const { record, detectedFields } = parseSmartText(listing)
   assert.equal(record.code, 'S84')
-  assert.equal(record.price, '4600000')
+  assert.equal(record.price, '4,600,000')
   assert.equal(record.size, '160')
   assert.equal(record.beds, '3')
   assert.equal(record.baths, '2')
@@ -41,6 +41,12 @@ test('يحلل إعلانًا غنيًا دون خلط المبلغ المتبق
   assert.equal(record.sourceRawText, listing.trim())
 })
 
+test('يستخرج الواجهة من صيغة صريحة دون خلطها مع الفيو', () => {
+  const { record } = parseSmartText('شقة للبيع في مدينتي\nالواجهة: بحري شرقي\nفيو مفتوح على اللاندسكيب')
+  assert.equal(record.facade, 'بحري')
+  assert.equal(record.view, 'فيو مفتوح')
+})
+
 test('يفصل بين رقم الدور ونوع الطابق ولا يملأ شرق القاهرة كمنطقة', () => {
   const { record } = parseSmartText('شقة للبيع، المدينة: مدينتي، المنطقة: شرق القاهرة، الدور: الدور الثالث، دور متكرر بفيو مفتوح')
   assert.equal(record.city, 'مدينتي')
@@ -52,7 +58,7 @@ test('يفصل بين رقم الدور ونوع الطابق ولا يملأ ش
 test('لا يلتقط رقم الأقساط أو القسط ككود أو سعر', () => {
   const { record } = parseSmartText('المتبقي 10 أقساط، قيمة القسط 152 ألف، المطلوب 4,600,000، الكود S89')
   assert.equal(record.code, 'S89')
-  assert.equal(record.price, '4600000')
+  assert.equal(record.price, '4,600,000')
 })
 
 test('يستخرج الكود من الصيغ العربية والإنجليزية', () => {

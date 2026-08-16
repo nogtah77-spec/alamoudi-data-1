@@ -168,9 +168,13 @@ export const VIEW_ALIASES: CanonicalMap[] = buildMap(
 
 export const FACADE_ALIASES: CanonicalMap[] = buildMap(
   [
-    { canonical: 'أمامي', aliases: ['واجهة أمامية', 'فيو أمامي', 'أمامية'] },
-    { canonical: 'خلفي', aliases: ['واجهة خلفية', 'فيو خلفي', 'خلفية'] },
-    { canonical: 'خلفي جانبي', aliases: ['واجهة خلفية جانبية', 'جانبية خلفية'] },
+  { canonical: 'أمامي', aliases: ['واجهة أمامية', 'فيو أمامي', 'أمامية'] },
+  { canonical: 'خلفي', aliases: ['واجهة خلفية', 'فيو خلفي', 'خلفية'] },
+  { canonical: 'خلفي جانبي', aliases: ['واجهة خلفية جانبية', 'جانبية خلفية'] },
+  { canonical: 'بحري', aliases: ['واجهة بحرية', 'بحري', 'شمالي', 'شمال'] },
+  { canonical: 'شرقي', aliases: ['واجهة شرقية', 'شرقي', 'شرق'] },
+  { canonical: 'غربي', aliases: ['واجهة غربية', 'غربي', 'غرب'] },
+  { canonical: 'قبلي', aliases: ['واجهة قبلية', 'قبلي', 'جنوبي', 'جنوب'] },
   ],
   referenceOptions.facades,
 )

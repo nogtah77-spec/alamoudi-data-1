@@ -225,7 +225,10 @@ export function parseSmartText(rawText: string): ParseResult {
     || (/(?:فيو|إطلالة|اطلالة)\s+(?:حديقة|جنينة)/i.test(text) ? 'فيو جنينة' : '')
   if (view) { record.view = view; detectedFields.push('view') }
 
-  const facade = matchOption(text, referenceOptions.facades, FACADE_ALIASES)
+  const explicitFacade = text.match(/(?:الواجهة|اتجاه\s+العقار|اتجاه|orientation|facade)\s*[:：-]?\s*([^\n،,]+)/i)?.[1]?.trim()
+  const facade = explicitFacade
+    ? (matchOption(explicitFacade, referenceOptions.facades, FACADE_ALIASES) || explicitFacade)
+    : matchOption(text, referenceOptions.facades, FACADE_ALIASES)
   if (facade) { record.facade = facade; detectedFields.push('facade') }
 
   const explicitFloor = text.match(/(?:الدور|دور|رقم\s+الدور)\s*[:：-]?\s*(?:الدور\s+)?([^\n،,\.]+)/i)?.[1]?.trim()
