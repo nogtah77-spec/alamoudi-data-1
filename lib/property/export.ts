@@ -45,10 +45,19 @@ function exportCsv(record: PropertyRecord) {
   const header = Object.keys(row).map(escapeCsv).join(',')
   const values = Object.values(row).map(escapeCsv).join(',')
   const csv = `\uFEFF${header}\r\n${values}\r\n`
-  triggerDownload(
-    new File([csv], `${baseFilename(record)}.csv`, { type: 'text/csv;charset=utf-8' }),
-    `${baseFilename(record)}.csv`,
-  )
+  const filename = `${baseFilename(record)}.csv`
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.setAttribute('download', filename)
+  link.type = 'text/csv'
+  link.style.display = 'none'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 function exportJson(record: PropertyRecord) {
