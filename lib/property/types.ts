@@ -122,7 +122,6 @@ export const emptyProperty: PropertyRecord = {
 
 export const propertyFields: PropertyField[] = [
   { key: 'code', label: 'كود العقار', section: 'basic', kind: 'text', placeholder: 'يُنشأ تلقائيًا إن تُرك فارغًا' },
-  { key: 'title', label: 'عنوان العقار', section: 'basic', kind: 'text', required: true },
   { key: 'type', label: 'نوع العقار', section: 'basic', kind: 'select', options: referenceOptions.types },
   { key: 'category', label: 'الفئة', section: 'basic', kind: 'select', options: referenceOptions.categories },
   { key: 'status', label: 'حالة العقار', section: 'basic', kind: 'select', options: referenceOptions.statuses },

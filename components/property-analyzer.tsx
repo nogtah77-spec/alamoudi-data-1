@@ -46,7 +46,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
     [record],
   )
   const completionFields = [
-    'code', 'title', 'type', 'category', 'price', 'size', 'beds', 'baths',
+    'code', 'type', 'category', 'price', 'size', 'beds', 'baths',
     'floor', 'finishing', 'view', 'remainingAmount', 'installmentCount',
     'installmentAmount', 'installmentFrequency', 'installmentPeriod',
   ] as const

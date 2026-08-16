@@ -140,9 +140,10 @@ export function parseSmartText(rawText: string): ParseResult {
 
   if (!text) return { record, detectedFields, conflicts }
 
+  const explicitTitle = text.match(/(?:العنوان|اسم\s+العقار|title)\s*[:：-]\s*([^\n،,]+)/i)?.[1]?.trim()
   const firstLine = text.split(/[\n،,]/)[0]?.trim()
   const projectTitle = text.match(/(?:وصال\s+(?:ريزدنس|فيوز)|Wesal\s+(?:Residence|Views?)|Wasl\s+(?:Residence|Views?))/i)?.[0]?.trim()
-  const cleanedTitle = projectTitle || firstLine
+  const cleanedTitle = explicitTitle || projectTitle || firstLine
     ?.replace(/^(?:🏢\s*)?(?:شقة|شقه|فيلا|استوديو|أستوديو|مكتب|محل)\s*/i, '')
     .replace(/\s*(?:للبيع|للإيجار|للايجار|for\s+(?:sale|rent))\s*/i, ' ')
     .replace(/\s*[-–—:]\s*$/, '')
@@ -176,7 +177,7 @@ export function parseSmartText(rawText: string): ParseResult {
     if (price.conflict) { detectedFields.push('price_conflict'); conflicts.push('price') }
   }
 
-  // العملة — تُطابَق فقط من رمز/اسم صريح، ل�� تُستنتج من الدولة أو الرقم وحده.
+  // العملة — تُطابَق فقط من رمز/اسم صريح، ل���� تُستنتج من الدولة أو الرقم وحده.
   const currency = matchOption(text, referenceOptions.currencies, CURRENCY_ALIASES)
   if (currency) { record.currency = currency; detectedFields.push('currency') }
 
@@ -227,7 +228,9 @@ export function parseSmartText(rawText: string): ParseResult {
   const facade = matchOption(text, referenceOptions.facades, FACADE_ALIASES)
   if (facade) { record.facade = facade; detectedFields.push('facade') }
 
+  const explicitFloor = text.match(/(?:الدور|الطابق)\s*[:：-]?\s*(الدور\s+)?([^\n،,]+)/i)?.[2]?.trim()
   const floor = matchOption(text, referenceOptions.floors, FLOOR_ALIASES)
+    || (explicitFloor ? explicitFloor.replace(/\s+/g, ' ').trim() : '')
   if (floor) { record.floor = floor; detectedFields.push('floor') }
 
   const category = matchOption(text, referenceOptions.categories, CATEGORY_ALIASES)
@@ -250,13 +253,15 @@ export function parseSmartText(rawText: string): ParseResult {
 
   // شروط الدفع/التسليم المعلنة — تُحفظ حرفيًا كما وردت، دون تحويل نسبة إلى
   // مبلغ أو عبارة نسبية إلى تاريخ تقويمي مخترع (SMART_ANALYZER_SCHEMA_HANDOFF.md §6).
-  const downPayment = matchClauseValue(text, DOWN_PAYMENT_KEYWORDS)
+  const downPayment = text.match(/(?:المقدم|مقدم|down\s*payment)\s*[:：-]?\s*([^\n]+)/i)?.[1]
+    ?.split(/(?=المبلغ\s+المتبقي|عدد\s+الأقساط|قيمة\s+القسط|دورية\s+السداد|مدة\s+التقسيط)/i)[0]
+    ?.trim()
   if (downPayment) { record.downPayment = downPayment; detectedFields.push('downPayment') }
 
   const remainingAmount = text.match(/(?:المبلغ\s+المتبقي|المتبقي)\s*[:：-]?\s*([^\n،]+)/i)?.[1]?.trim()
   if (remainingAmount) { record.remainingAmount = remainingAmount; detectedFields.push('remainingAmount') }
 
-  const installmentCount = text.match(/(?:المتبقي\s+هو\s*|عدد\s+الأقساط\s*[:：-]?\s*)(\d+)\s*أقساط?/i)?.[1]
+  const installmentCount = text.match(/(?:المتبقي\s+هو\s*|عدد\s+الأقساط(?:\s+المتبقية)?\s*[:：-]?\s*)(\d+)\s*أقساط?/i)?.[1]
   if (installmentCount) { record.installmentCount = installmentCount; detectedFields.push('installmentCount') }
 
   const installmentAmount = text.match(/(?:قيمة\s+كل\s+قسط|قيمة\s+القسط)\s*[:：-]?\s*([^\n،]+)/i)?.[1]?.trim()
@@ -292,7 +297,9 @@ export function parseSmartText(rawText: string): ParseResult {
 
   // (?<![\u0600-\u06FFA-Za-z]) يمنع مطابقة الكلمة المفتاحية عند ظهورها كجزء
   // من كلمة أطول (مثل "حي" داخل "أحيانًا")، إذ لا تفصل \b بين حرفين عربيين.
-  const region = text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المنطقة|منطقة|region)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()
+  const explicitRegion = text.match(/(?:المنطقة|region)\s*[:：-]\s*([^\n،,]+)/i)?.[1]?.trim()
+  const region = explicitRegion
+    || (text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المنطقة|منطقة|region)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim() ?? '')
   if (region) { record.region = region; detectedFields.push('region') }
 
   const city = matchOption(text, referenceOptions.cities, CITY_ALIASES)
@@ -324,8 +331,14 @@ export function parseSmartText(rawText: string): ParseResult {
   const listingUrl = text.match(/(https?:\/\/[^\s]+)/g)?.find((url) => url !== locationUrl && url !== videoUrl)
   if (listingUrl) { record.listingUrl = listingUrl; detectedFields.push('listingUrl') }
 
-  const phone = text.match(/(?:رقم المصدر|رقم التواصل|جوال|هاتف)\s*[:：]?\s*(\+?\d[\d\s-]{6,})/i)?.[1]?.trim()
+  const phone = text.match(/(?:رقم المصدر|رقم التواصل|جوال|هاتف|واتساب)\s*[:：]?\s*(\+?\d[\d\s-]{6,})/i)?.[1]?.trim()
   if (phone) { record.sourceNumber = phone; detectedFields.push('sourceNumber') }
+
+  const sourceName = text.match(/(?:المعلن|اسم\s+المصدر)\s*[:：-]?\s*([^\n،,]+)/i)?.[1]?.trim()
+  if (sourceName) { record.sourceName = sourceName; detectedFields.push('sourceName') }
+
+  const responsibleEmployee = text.match(/(?:اسم\s+المسوق|المسوق|الموظف\s+المسؤول)\s*[:：-]?\s*([^\n،,]+)/i)?.[1]?.trim()
+  if (responsibleEmployee) { record.responsibleEmployee = responsibleEmployee; detectedFields.push('responsibleEmployee') }
 
   // إشارة تعريفية فقط (metadata) — لا تُنشئ ولا تُعدّل أي حقل بيانات. تدل فقط
   // على أن النص يحتوي على عبارة ادعاء/تسويق معروفة (مثل "آخر وحدة بالسعر
