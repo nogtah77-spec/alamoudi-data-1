@@ -309,7 +309,7 @@ export function parseSmartText(rawText: string): ParseResult {
   // من كلمة أطول (مثل "حي" داخل "أحيانًا")، إذ لا تفصل \b بين حرفين عربيين.
   const explicitRegion = text.match(/(?:المنطقة|region)\s*[:：-]\s*([^\n،,]+)/i)?.[1]?.trim()
   const region = explicitRegion
-    || (text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المنطقة|منطقة|region)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim() ?? '')
+    || (text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المنطقة|منطقة|region)\s*[:：]?\s*([^\n،,]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s+(?:شرق\s+القاهرة|east\s+cairo)(?:\s|$)|\s*$|[،,])/i)?.[1]?.trim() ?? '')
   const normalizedRegion = region.trim()
   if (normalizedRegion && !/^(?:شرق\s+القاهرة|east\s+cairo)$/i.test(normalizedRegion)) {
     record.region = normalizedRegion
@@ -326,14 +326,14 @@ export function parseSmartText(rawText: string): ParseResult {
     detectedFields.push('city')
   }
 
-  const districtFromLocation = text.match(/(?:مدينة\s+الشروق|new\s+shorouk)\s+(?:الحي|حي)\s+([^\n،,]+)/i)?.[1]?.trim()
-  if (!record.district && districtFromLocation) {
-    record.district = districtFromLocation
+  // يدعم الصياغة الطبيعية: "مدينة الشروق الحي الثامن" و"التجمع الخامس حي البنفسج".
+  const districtFromLocation = text.match(/(?:مدينة\s+الشروق|التجمع\s+الخامس|مدينتي|بدر)\s+(?:في\s+)?(?:الحي|حي)\s+([^\n،,]+?)(?=\s+(?:شرق\s+القاهرة|east\s+cairo)(?:\s|$)|\s*$|[،,])/i)?.[1]?.trim()
+  const district = districtFromLocation
+    || text.match(/(?<![\u0600-\u06FFA-Za-z])(?:الحي|حي|district)\s*[:：]?\s*([^\n،,]+?)(?=\s+(?:شرق\s+القاهرة|east\s+cairo)(?:\s|$)|\s*$|[،,])/i)?.[1]?.trim()
+  if (district && !record.district) {
+    record.district = district.replace(/[.؛;]+$/, '').trim()
     detectedFields.push('district')
   }
-
-  const district = text.match(/(?<![\u0600-\u06FFA-Za-z])(?:الحي|حي|district)\s*[:：]?\s*([^\n،,]+)/i)?.[1]?.trim()
-  if (district && !record.district) { record.district = district; detectedFields.push('district') }
 
   
   const locationUrl = text.match(/(https?:\/\/(?:www\.)?(?:maps\.google|goo\.gl\/maps|maps\.app\.goo\.gl)[^\s]+)/i)?.[1]

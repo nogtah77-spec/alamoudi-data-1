@@ -57,3 +57,23 @@ test('يعتبر وصال وحدها أو مع اسم المشروع كمباو�
     assert.equal(record.city, 'كمباوند وصال')
   }
 })
+
+test('يفصل مدينة الشروق عن المنطقة والحي في الصياغة الطبيعية', () => {
+  const { record } = parseSmartText('شقة للبيع في مدينة الشروق المنطقة الخامسة الحي الثامن')
+  assert.equal(record.city, 'مدينة الشروق')
+  assert.equal(record.region, 'الخامسة')
+  assert.equal(record.district, 'الثامن')
+})
+
+test('يختار التجمع ويستخرج حي البنفسج دون إدخال شرق القاهرة', () => {
+  const { record } = parseSmartText('شقة للبيع في التجمع الخامس حي البنفسج شرق القاهرة')
+  assert.equal(record.city, 'التجمع')
+  assert.equal(record.district, 'البنفسج')
+  assert.equal(record.region, '')
+})
+
+test('يضع B12 في المنطقة عند ذكرها كمنطقة', () => {
+  const { record } = parseSmartText('شقة للبيع في مدينتي منطقة B12')
+  assert.equal(record.city, 'مدينتي')
+  assert.equal(record.region, 'B12')
+})
