@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import { emptyProperty, referenceOptions, type PropertyRecord } from './types'
+import { emptyProperty, referenceOptions, type PropertyRecord } from './types.ts'
 import {
   CATEGORY_ALIASES,
   CURRENCY_ALIASES,
@@ -25,7 +25,7 @@ import {
   VIEW_ALIASES,
   YES_NO_KEYWORDS,
   type CanonicalMap,
-} from './knowledge-base'
+} from './knowledge-base.ts'
 
 export type ParseResult = {
   record: PropertyRecord
@@ -45,6 +45,11 @@ export type ParseResult = {
  * من قيمة رقمية مختلفة في النص — عندها لا يُحسم الاختيار تلقائيًا، بل يُحفظ
  * أول رقم موجود مع الإشارة إلى وجود تعارض (Smart Analyzer v2.0: "التعارض يُحفظ لا يُحسم").
  */
+function matchExplicitCode(text: string): string {
+  const match = text.match(/(?:الكود|كود|code|رقم\s+(?:الوحدة|العقار))\s*[:：-]?\s*([A-Za-zА-Яа-яء-ي][A-Za-zА-Яа-яء-ي0-9_-]{1,19}|\d{2,20})/i)
+  return match?.[1]?.trim() ?? ''
+}
+
 function matchNumber(text: string, patterns: RegExp[]): { value: string; conflict: boolean } {
   const found: string[] = []
   for (const pattern of patterns) {
@@ -141,15 +146,23 @@ export function parseSmartText(rawText: string): ParseResult {
   }
 
   record.features = text
+  const code = matchExplicitCode(text)
+  if (code) { record.code = code; detectedFields.push('code') }
+
   // النص الأصلي الكامل كما ورد دون أي إعادة صياغة — تعبئة إضافية فقط، لا تحل
   // محل features ولا تغيّر سلوكه الحالي (SMART_ANALYZER_SCHEMA_HANDOFF.md §12).
   record.sourceRawText = text
 
-  const price = matchNumber(text, [
-    /(?:السعر|سعر|price)\s*[:：]?\s*([\d,.٫٠-٩]+(?:\s*(?:مليون|الف|ألف|k|m))?)/i,
-    /([\d,.٫٠-٩]+\s*(?:مليون|الف|ألف))/i,
-    /([\d,]{5,})\s*(?:ريال|جنيه|درهم|SAR|EGP|AED)/i,
-  ])
+  const requestedPriceText = text.match(/(?:المطلوب|السعر\s+المطلوب|asking\s+price)\s*[:：-]?\s*([^\n،]+)/i)?.[1] ?? ''
+  const price = requestedPriceText
+    ? matchNumber(requestedPriceText, [
+        /([\d,.٫٠-٩]+(?:\s*(?:مليون|الف|ألف|k|m))?)/i,
+      ])
+    : matchNumber(text, [
+        /(?:السعر|سعر|price)\s*[:：]?\s*([\d,.٫٠-٩]+(?:\s*(?:مليون|الف|ألف|k|m))?)/i,
+        /([\d,.٫٠-٩]+\s*(?:مليون|الف|ألف))/i,
+        /([\d,]{5,})\s*(?:ريال|جنيه|درهم|SAR|EGP|AED)/i,
+      ])
   if (price.value) {
     record.price = price.value
     detectedFields.push('price')
@@ -201,6 +214,7 @@ export function parseSmartText(rawText: string): ParseResult {
   if (finishing) { record.finishing = finishing; detectedFields.push('finishing') }
 
   const view = matchOption(text, referenceOptions.views, VIEW_ALIASES)
+    || (/(?:فيو|إطلالة|اطلالة)\s+(?:حديقة|جنينة)/i.test(text) ? 'فيو جنينة' : '')
   if (view) { record.view = view; detectedFields.push('view') }
 
   const facade = matchOption(text, referenceOptions.facades, FACADE_ALIASES)
@@ -233,6 +247,7 @@ export function parseSmartText(rawText: string): ParseResult {
   if (downPayment) { record.downPayment = downPayment; detectedFields.push('downPayment') }
 
   const installmentPeriod = matchClauseValue(text, INSTALLMENT_PERIOD_KEYWORDS)
+    || text.match(/(?:إجمالي\s+المدة|مدة\s+الأقساط|مدة\s+التقسيط)[^\n،,]*?(\d+\s*(?:سنة|سنين|سنوات|شهر|شهور|أشهر))/i)?.[1]?.trim()
   if (installmentPeriod) { record.installmentPeriod = installmentPeriod; detectedFields.push('installmentPeriod') }
 
   const deliveryDate = matchClauseValue(text, DELIVERY_DATE_KEYWORDS)
@@ -313,7 +328,7 @@ const HEADER_ALIASES: Record<keyof PropertyRecord, string[]> = {
   region: ['المنطقة', 'region'],
   city: ['المدينة', 'city'],
   district: ['الحي', 'district'],
-  locationUrl: ['رابط الموقع (خرائط)', 'رابط الموقع', 'رابط اللوكيشن', 'locationUrl'],
+  locationUrl: ['رابط الموقع (خرائط)', 'رابط الموقع', 'رابط اللوك��شن', 'locationUrl'],
   listingUrl: ['رابط الإعلان', 'listingUrl'],
   videoUrl: ['رابط الفيديو', 'videoUrl'],
   images: ['روابط الصور (مفصولة بفاصلة)', 'الصور', 'images'],
