@@ -14,12 +14,20 @@ function triggerDownload(blob: Blob, filename: string) {
   const link = document.createElement('a')
   link.href = url
   link.download = filename
+  link.style.display = 'none'
+  document.body.appendChild(link)
   link.click()
-  URL.revokeObjectURL(url)
+  window.setTimeout(() => {
+    link.remove()
+    URL.revokeObjectURL(url)
+  }, 1000)
 }
 
 function baseFilename(record: PropertyRecord) {
-  return (record.code || record.title || 'عقار').replace(/[\\/:*?"<>|]/g, '-').trim() || 'عقار'
+  return (record.code || record.title || 'عقار')
+    .replace(/\.(?:xlsx|xls|csv|json|docx)$/i, '')
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .trim() || 'عقار'
 }
 
 function exportXlsx(record: PropertyRecord) {
@@ -33,11 +41,12 @@ function exportXlsx(record: PropertyRecord) {
 
 function exportCsv(record: PropertyRecord) {
   const row = buildLabeledRow(record)
-  const header = Object.keys(row).join(',')
-  const values = Object.values(row).map((value) => `"${value.replaceAll('"', '""')}"`).join(',')
-  const csv = `${header}\r\n${values}\r\n`
+  const escapeCsv = (value: string) => `"${value.replaceAll('"', '""')}"`
+  const header = Object.keys(row).map(escapeCsv).join(',')
+  const values = Object.values(row).map(escapeCsv).join(',')
+  const csv = `\uFEFF${header}\r\n${values}\r\n`
   triggerDownload(
-    new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }),
+    new File([csv], `${baseFilename(record)}.csv`, { type: 'text/csv;charset=utf-8' }),
     `${baseFilename(record)}.csv`,
   )
 }
