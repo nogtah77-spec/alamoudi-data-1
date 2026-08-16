@@ -12,6 +12,12 @@ type FieldsGridProps = {
 
 const SECTIONS = ['basic', 'details', 'location', 'source', 'media'] as const
 
+function formatPrice(value: string) {
+  const digits = value.replace(/[^\d]/g, '')
+  if (!digits) return ''
+  return Number(digits).toLocaleString('en-US')
+}
+
 export function FieldsGrid({ record, detectedFields, conflictFields = [], onChange }: FieldsGridProps) {
   return (
     <div className="flex flex-col gap-6">
@@ -74,7 +80,7 @@ export function FieldsGrid({ record, detectedFields, conflictFields = [], onChan
                         type={field.kind === 'number' ? 'text' : 'text'}
                         inputMode={field.kind === 'number' ? 'numeric' : undefined}
                         value={record[field.key]}
-                        onChange={(event) => onChange(field.key, event.target.value)}
+                        onChange={(event) => onChange(field.key, field.key === 'price' ? formatPrice(event.target.value) : event.target.value)}
                         placeholder={field.placeholder}
                         className={`h-10 w-full rounded-lg border bg-background px-3 text-sm font-normal outline-none transition focus:ring-2 ${
                           isConflicted

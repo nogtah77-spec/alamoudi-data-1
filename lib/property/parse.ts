@@ -172,7 +172,7 @@ export function parseSmartText(rawText: string): ParseResult {
         /([\d,]{5,})\s*(?:ريال|جنيه|درهم|SAR|EGP|AED)/i,
       ])
   if (price.value) {
-    record.price = price.value
+    record.price = Number(price.value).toLocaleString('en-US')
     detectedFields.push('price')
     if (price.conflict) { detectedFields.push('price_conflict'); conflicts.push('price') }
   }
@@ -185,7 +185,7 @@ export function parseSmartText(rawText: string): ParseResult {
     /(?:المساحة|مساحة|size)\s*[:：]?\s*([\d,.٫٠-٩]+)\s*(?:م2|م²|متر|sqm|sqft)?/i,
     /([\d,.٫٠-٩]+)\s*(?:م2|م²|متر مربع|متر|sqm|sqft)/i,
     // صيغة شائعة جدًا في إعلانات العقارات المصرية: رقم ملتصق مباشرة بحرف "م"
-    // بدون فاصل (مثل "320م")، لا يجوز الخلط بينها وبين "م" كحرف وحيد ملتبس؛
+    // بدون فاصل (مثل "320م")، لا يجوز الخلط بينها وبين "م" كحرف وحي�� ملتبس؛
     // الشرط الملزم هنا هو الالتصاق المباشر برقم وعدم اتباعها بحرف عربي آخر.
     /([\d,.٫٠-٩]+)\s?م(?![\u0600-\u06FF])/,
   ])
