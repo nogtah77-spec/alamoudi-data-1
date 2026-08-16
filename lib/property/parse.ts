@@ -130,18 +130,30 @@ function buildResidualDescription(text: string, record: PropertyRecord) {
   const extractedValues = new Set(
     Object.entries(record)
       .filter(([key, value]) => key !== 'title' && key !== 'features' && key !== 'sourceRawText' && value)
-      .map(([, value]) => String(value).trim()),
+      .map(([, value]) => String(value).replace(/[,،]/g, '').trim().toLowerCase()),
   )
-  const fieldLabels = /^(?:الكود|كود العقار|العنوان|اسم العقار|النوع|نوع العقار|الفئة|السعر|المطلوب|المساحة|غرف(?: النوم)?|حمام(?:ات)?|الحمامات|الدور|نوع الطابق|التشطيب|الفيو|الواجهة|اتجاه(?: العقار)?|ماستر|أسانسير|موقف السيارة|العملة|المقدم|المبلغ المتبقي|عدد الأقساط|قيمة القسط|دورية السداد|مدة التقسيط|التسليم|الحالة القانونية|قابل للتفاوض|المدينة|المنطقة|الحي|رابط|المعلن|اسم المصدر|رقم المصدر|الموظف المسؤول)\s*[:：-]/i
-  const sectionHeadings = /^(?:التفاصيل المالية|المميزات والمواصفات|المواصفات|بيانات العقار|العنوان|الموقع|للتواصل|للتفاصيل)\s*:?[\s]*$/i
-  const lines = text.split(/[\r\n،,]/).map((line) => line.replace(/^\s*[-•*▪◦✅✨📍🏢📐🏠💰]+\s*/, '').trim()).filter(Boolean)
-  const residual = lines.filter((line) => {
-    if (sectionHeadings.test(line) || fieldLabels.test(line)) return false
-    if (/^(?:المقدم|السعر|المطلوب|العملة|المساحة|غرف|غرفة|حمام|الحمامات|الدور|الفيو|الواجهة|التشطيب|التسليم|التفاوض|قابل للتفاوض)/i.test(line)) return false
-    if (/^(?:شقة|شقه|فيلا|استوديو|أستوديو|مكتب|محل)\s+(?:للبيع|للإيجار|للايجار|for\s+(?:sale|rent))?\s*$/i.test(line)) return false
-    if (/^(?:https?:\/\/|واتساب|تواصل|اتصل|للاتصال)/i.test(line)) return false
-    return !extractedValues.has(line)
-  })
+  const bullet = /^\s*(?:[-•*▪◦✅✨📍🏢📐🏠💰]+)\s*/
+  const fieldLabel = /^(?:الكود|كود العقار|العنوان|اسم العقار|النوع|نوع العقار|نوع العملية|الفئة|السعر|المطلوب|المساحة|غرف(?: النوم)?|عدد غرف النوم|حمام(?:ات)?|عدد الحمامات|الحمامات|الدور|عدد الأدوار|نوع الطابق|التشطيب|حالة التشطيب|الفيو|الواجهة|اتجاه(?: العقار)?|الاتجاه|ماستر|أسانسير|يوجد أسانسير|عدد الشرفات|شرفة|يوجد جراج|جراج|العملة|المقدم|المبلغ المتبقي|عدد الأقساط|عدد الأقساط المتبقية|قيمة القسط|دورية السداد|مدة التقسيط|التسليم|موعد التسليم|الحالة|حالة العقار|الحالة القانونية|الموقف من التسجيل|طريقة السداد|قابل للتفاوض|المدينة|المنطقة|الحي|رابط|المعلن|اسم المصدر|رقم المصدر|رقم الهاتف|الهاتف|واتساب|المسوق|اسم المسوق|الموظف المسؤول)\s*(?:[:：-]|$)/i
+  const sectionHeading = /^(?:التفاصيل المالية|المميزات والمواصفات|المواصفات|بيانات العقار|الموقع|للتواصل|للتفاصيل|المميزات)\s*:?$/i
+  const rawLines = text.split(/\r?\n/).map((line) => line.replace(bullet, '').trim()).filter(Boolean)
+  const lines = rawLines.flatMap((line) => line.split(/[،]|,(?=\s*(?:الكود|السعر|المساحة|المقدم|المدينة|المنطقة|الحي|الهاتف|المميزات|الواجهة|الاتجاه|قابل\s+للتفاوض)(?:\s*[:：-]|\s))/i))
+  const residual: string[] = []
+  for (const [index, rawLine] of lines.entries()) {
+    let line = rawLine.replace(bullet, '').trim().replace(/[.;؛]+$/, '').trim()
+    if (!line || sectionHeading.test(line) || fieldLabel.test(line)) continue
+    if (/^(?:المقدم|السعر|المطلوب|المساحة|غرف|غرفة|حمام|الحمامات|الدور|الفيو|الواجهة|الاتجاه|التشطيب|التسليم|التفاوض|قابل للتفاوض|المدينة|المنطقة|الحي)\s+(?:\d|نعم|لا|قابل|غير|بدون|شرق|غرب|شمال|جنوب)/i.test(line)) continue
+    if (index === 0 && /^(?:شقة|شقه|فيلا|استوديو|أستوديو|مكتب|محل)(?:\s|$)/i.test(line)) {
+      const withoutTitlePrefix = line.replace(/^(?:شقة|شقه|فيلا|استوديو|أستوديو|مكتب|محل).*?(?:للبيع|للإيجار|للايجار|for\s+(?:sale|rent))\s*(?:[،,]|[-–—])\s*/i, '').trim()
+      if (withoutTitlePrefix && withoutTitlePrefix !== line) line = withoutTitlePrefix
+      else continue
+    }
+    if (/^(?:الموقع|المكان|العنوان)\s*[:：-]/i.test(line)) continue
+    if (/^(?:https?:\/\/|(?:فيسبوك|إنستجرام|انستجرام|تيك توك|تواصل|اتصل|للاتصال)\b)/i.test(line)) continue
+    if (/^(?:\d{1,3}|[\d,]+\s*(?:جنيه|جنيه مصري|ريال|درهم)?)$/i.test(line)) continue
+    if (/^(?:شقة|شقه|فيلا|استوديو|أستوديو|مكتب|محل)\s+(?:للبيع|للإيجار|للايجار|for\s+(?:sale|rent))?\s*$/i.test(line)) continue
+    const normalized = line.replace(/[,،]/g, '').trim().toLowerCase()
+    if (!extractedValues.has(normalized) && !residual.some((value) => value.toLowerCase() === line.toLowerCase())) residual.push(line)
+  }
   return residual.length ? residual.map((line) => `• ${line}`).join('\n') : ''
 }
 
@@ -415,7 +427,7 @@ const HEADER_ALIASES: Record<keyof PropertyRecord, string[]> = {
   remainingAmount: ['المبلغ المتبقي', 'المتبقي', 'remainingAmount'],
   installmentCount: ['عدد الأقساط', 'installmentCount'],
   installmentAmount: ['قيمة القسط', 'installmentAmount'],
-  installmentFrequency: ['دورية السداد', 'installmentFrequency'],
+  installmentFrequency: ['دورية ا��سداد', 'installmentFrequency'],
   installmentPeriod: ['مدة التقسيط', 'فترة التقسيط', 'installmentPeriod'],
   deliveryDate: ['التسليم', 'موعد التسليم', 'تاريخ التسليم', 'deliveryDate'],
   legalStatus: ['الحالة القانونية', 'legalStatus'],
