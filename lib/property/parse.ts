@@ -309,7 +309,7 @@ export function parseSmartText(rawText: string): ParseResult {
   // من كلمة أطول (مثل "حي" داخل "أحيانًا")، إذ لا تفصل \b بين حرفين عربيين.
   const explicitRegion = text.match(/(?:المنطقة|region)\s*[:：-]\s*([^\n،,]+)/i)?.[1]?.trim()
   const region = explicitRegion
-    || (text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المنطقة|منطقة|region)\s*[:：]?\s*([^\n،,]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s+(?:شرق\s+القاهرة|east\s+cairo)(?:\s|$)|\s*$|[،,])/i)?.[1]?.trim() ?? '')
+    || (text.match(/(?<![\u0600-\u06FFA-Za-z])(?:المنطقة|منطقة|region)\s*[:：]?\s*([^\n،,]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s+(?:شرق\s+القاهرة|east\s+cairo)(?:\s|$)|\s*[\n\r]|\s*$|[،,])/i)?.[1]?.trim() ?? '')
   const normalizedRegion = region.trim()
   if (normalizedRegion && !/^(?:شرق\s+القاهرة|east\s+cairo)$/i.test(normalizedRegion)) {
     record.region = normalizedRegion

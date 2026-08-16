@@ -77,3 +77,9 @@ test('يضع B12 في المنطقة عند ذكرها كمنطقة', () => {
   assert.equal(record.city, 'مدينتي')
   assert.equal(record.region, 'B12')
 })
+
+test('يستخرج B12 من إعلان متعدد الأسطر', () => {
+  const { record } = parseSmartText('شقة للبيع في مدينتي\nمنطقة B12\nالمساحة: 175 متر')
+  assert.equal(record.city, 'مدينتي')
+  assert.equal(record.region, 'B12')
+})
