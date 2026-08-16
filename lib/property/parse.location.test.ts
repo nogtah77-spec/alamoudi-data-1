@@ -83,3 +83,9 @@ test('يستخرج B12 من إعلان متعدد الأسطر', () => {
   assert.equal(record.city, 'مدينتي')
   assert.equal(record.region, 'B12')
 })
+
+test('يستخرج B12 حتى عندما تسبقها شرطة أو رمز', () => {
+  const { record } = parseSmartText('المدينة: مدينتي\n- منطقة B12\nالمساحة: 175 م²')
+  assert.equal(record.city, 'مدينتي')
+  assert.equal(record.region, 'B12')
+})
