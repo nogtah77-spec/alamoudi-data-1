@@ -10,7 +10,7 @@ type FieldsGridProps = {
   onChange: (key: keyof PropertyRecord, value: string) => void
 }
 
-const SECTIONS = ['basic', 'details', 'location', 'source', 'media'] as const
+const SECTIONS = ['basic', 'location', 'details', 'source', 'media'] as const
 
 function formatPrice(value: string) {
   const digits = value.replace(/[^\d]/g, '')
