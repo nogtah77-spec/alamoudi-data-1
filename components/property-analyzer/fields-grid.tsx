@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, Sparkles } from 'lucide-react'
+import { AlertTriangle, BadgeCheck } from 'lucide-react'
 import { propertyFields, sectionLabels, type PropertyRecord } from '@/lib/property/types'
 
 type FieldsGridProps = {
@@ -41,8 +41,8 @@ export function FieldsGrid({ record, detectedFields, conflictFields = [], onChan
                       )}
                       {isDetected && !isConflicted && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
-                          <Sparkles size={10} />
-                          مكتشف
+                          <BadgeCheck size={11} strokeWidth={2.2} />
+                          مستخرج تلقائيًا
                         </span>
                       )}
                       {isConflicted && (
