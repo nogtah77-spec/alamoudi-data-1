@@ -40,9 +40,9 @@ export function FieldsGrid({ record, detectedFields, conflictFields = [], onChan
                         <span className="text-[10px] font-normal text-muted-foreground">({field.hint})</span>
                       )}
                       {isDetected && !isConflicted && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
-                          <BadgeCheck size={11} strokeWidth={2.2} />
-                          مستخرج تلقائيًا
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+                          <BadgeCheck size={11} strokeWidth={2.4} />
+                          مستخرج
                         </span>
                       )}
                       {isConflicted && (
