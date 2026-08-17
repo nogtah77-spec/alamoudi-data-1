@@ -115,7 +115,7 @@ export function AgentsManager({ initialAgents }: AgentsManagerProps) {
 
   return (
     <main dir="rtl" className="min-h-screen bg-transparent text-foreground">
-      <header className="border-b border-border bg-card/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-[var(--header-border)] bg-transparent shadow-[0_10px_28px_-18px_var(--header-glow)] backdrop-blur-2xl" style={{ backgroundImage: 'var(--header-surface)' }}>
         <div className="mx-auto flex max-w-[900px] flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex items-center gap-3">
             <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-primary/30 bg-primary/10 shadow-md ring-1 ring-primary/20">

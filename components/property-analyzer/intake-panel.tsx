@@ -43,7 +43,7 @@ export function IntakePanel({
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <section className="rounded-2xl border border-border/80 bg-card/95 p-5 shadow-[0_12px_30px_-24px_color-mix(in_oklab,var(--foreground)_45%,transparent)] sm:p-6">
         <header className="mb-4 flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <UploadCloud size={17} strokeWidth={2.2} />
@@ -97,7 +97,7 @@ export function IntakePanel({
         {isProcessing && <p className="mt-3 text-xs font-medium text-primary">جارٍ تحليل الملف…</p>}
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+      <section className="rounded-2xl border border-border/80 bg-card/95 p-5 shadow-[0_12px_30px_-24px_color-mix(in_oklab,var(--foreground)_45%,transparent)] sm:p-6">
         <header className="mb-4 flex items-center gap-2.5">
           <span className="flex size-8 items-center justify-center rounded-lg bg-accent/15 text-accent-foreground">
             <Sparkles size={17} strokeWidth={2.2} />

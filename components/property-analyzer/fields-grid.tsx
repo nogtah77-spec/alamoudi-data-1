@@ -24,9 +24,9 @@ export function FieldsGrid({ record, detectedFields, conflictFields = [], onChan
       {SECTIONS.map((section) => {
         const fields = propertyFields.filter((field) => field.section === section)
         return (
-          <section key={section} className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+          <section key={section} className="rounded-2xl border border-border/80 bg-card/95 p-5 shadow-[0_12px_30px_-24px_color-mix(in_oklab,var(--foreground)_45%,transparent)] sm:p-6">
             <h3 className="mb-4 text-sm font-bold text-foreground">{sectionLabels[section]}</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid items-start gap-x-5 gap-y-4 sm:grid-cols-2">
               {fields.map((field) => {
                 const isDetected = detectedFields.includes(field.key)
                 const isConflicted = conflictFields.includes(field.key)
@@ -59,7 +59,7 @@ export function FieldsGrid({ record, detectedFields, conflictFields = [], onChan
                       <select
                         value={record[field.key]}
                         onChange={(event) => onChange(field.key, event.target.value)}
-                        className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        className="h-10 w-full rounded-xl border border-input/90 bg-background/90 px-3 text-sm font-normal outline-none transition hover:border-primary/40 focus:border-ring focus:ring-2 focus:ring-ring/20"
                       >
                         <option value="">— اختر —</option>
                         {field.options?.map((option) => (
