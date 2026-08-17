@@ -183,7 +183,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1280px] gap-6 px-5 py-6 sm:px-8 lg:grid-cols-[380px_1fr]">
+      <div className="mx-auto grid max-w-[1280px] items-start gap-6 px-4 py-6 sm:px-8 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-7">
         <div className="flex flex-col gap-5 lg:sticky lg:top-6 lg:self-start">
           <IntakePanel
             onFile={handleFile}
@@ -199,7 +199,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
           />
 
           {alternateRecords.length > 0 && (
-            <section className="rounded-2xl border border-border bg-card p-5">
+            <section className="rounded-2xl border border-border/80 bg-card/95 p-5 shadow-[0_12px_30px_-24px_color-mix(in_oklab,var(--foreground)_45%,transparent)]">
               <h3 className="mb-3 text-sm font-bold">عقارات أخرى في الملف ({alternateRecords.length})</h3>
               <div className="flex flex-col gap-2">
                 {alternateRecords.map((alt, index) => (
@@ -220,7 +220,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
             </section>
           )}
 
-          <section className="rounded-2xl border border-border bg-card p-5">
+          <section className="rounded-2xl border border-border/80 bg-card/95 p-5 shadow-[0_12px_30px_-24px_color-mix(in_oklab,var(--foreground)_45%,transparent)]">
             <div className="mb-2 flex items-center justify-between text-xs font-bold">
               <span>نسبة اكتمال البيانات</span>
               <span>{completion}%</span>
