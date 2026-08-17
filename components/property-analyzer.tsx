@@ -143,7 +143,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
 
   return (
     <main dir="rtl" className="min-h-screen bg-transparent text-foreground">
-      <header className="sticky top-0 z-40 border-b border-[var(--header-border)] bg-[var(--header-surface)] shadow-[0_10px_28px_-18px_var(--header-glow)] backdrop-blur-2xl">
+      <header className="sticky top-0 z-40 border-b border-[var(--header-border)] bg-transparent shadow-[0_10px_28px_-18px_var(--header-glow)] backdrop-blur-2xl" style={{ backgroundImage: 'var(--header-surface)' }}>
         <div className="mx-auto flex max-w-[1280px] flex-col gap-4 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <span className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/35 bg-primary/10 shadow-md ring-1 ring-primary/15">
