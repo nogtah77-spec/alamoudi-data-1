@@ -125,9 +125,9 @@
   --sidebar-ring: oklch(0.82 0.105 82);
   --background-image: url('/real-estate-professional-bg.png');
   --background-blur: 1.5px;
-  --header-surface: linear-gradient(180deg, oklch(0 0 0 / 0.42) 0%, oklch(0 0 0 / 0.2) 52%, oklch(0 0 0 / 0.08) 100%), linear-gradient(112deg, oklch(0.14 0.035 245 / 0.98) 0%, oklch(0.21 0.05 245 / 0.95) 48%, oklch(0.12 0.03 245 / 0.98) 100%);
-  --header-border: oklch(0.55 0.11 82 / 0.42);
-  --header-glow: oklch(0.52 0.13 82 / 0.12);
+  --header-surface: linear-gradient(180deg, oklch(0 0 0 / 0.28) 0%, oklch(0 0 0 / 0.19) 52%, oklch(0 0 0 / 0.11) 100%), linear-gradient(112deg, oklch(0.12 0.03 245 / 0.86) 0%, oklch(0.18 0.045 245 / 0.78) 48%, oklch(0.1 0.025 245 / 0.84) 100%);
+  --header-border: oklch(0.58 0.1 82 / 0.34);
+  --header-glow: oklch(0 0 0 / 0.14);
 }
 
 @layer base {
