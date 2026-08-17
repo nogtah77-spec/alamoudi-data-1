@@ -146,7 +146,9 @@
 }
 
 .dark .day-header-separator::after {
-  display: none;
+  display: block;
+  background: linear-gradient(90deg, transparent 0%, oklch(0.22 0.065 245 / 0.62) 18%, oklch(0.3 0.085 245 / 0.86) 50%, oklch(0.22 0.065 245 / 0.62) 82%, transparent 100%);
+  box-shadow: 0 1px 7px oklch(0.2 0.06 245 / 0.24);
 }
 
 @layer base {
