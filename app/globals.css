@@ -84,7 +84,7 @@
   --background-overlay: oklch(0.08 0.02 245 / 0.34);
   --background-image: url('/real-estate-day-bg.png');
   --background-blur: 2px;
-  --header-surface: linear-gradient(180deg, oklch(0 0 0 / 0.72) 0%, oklch(0 0 0 / 0.52) 52%, oklch(0 0 0 / 0.34) 100%), linear-gradient(112deg, oklch(0 0 0 / 0.66) 0%, oklch(0 0 0 / 0.44) 48%, oklch(0 0 0 / 0.58) 100%);
+  --header-surface: linear-gradient(180deg, oklch(0 0 0 / 0.22) 0%, oklch(0 0 0 / 0.14) 52%, oklch(0 0 0 / 0.07) 100%), linear-gradient(112deg, oklch(0 0 0 / 0.18) 0%, oklch(0 0 0 / 0.1) 48%, oklch(0 0 0 / 0.16) 100%);
   --header-border: oklch(0.78 0.015 95 / 0.28);
   --header-glow: oklch(0 0 0 / 0.2);
 }
