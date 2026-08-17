@@ -183,7 +183,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1280px] items-start gap-6 px-4 pb-6 pt-24 sm:px-8 sm:pt-20 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-7">
+      <div className="mx-auto grid max-w-[1280px] items-start gap-6 px-4 pb-6 pt-28 sm:px-8 sm:pt-24 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-7">
         <div className="flex flex-col gap-5 lg:sticky lg:top-6 lg:self-start">
           <IntakePanel
             onFile={handleFile}
