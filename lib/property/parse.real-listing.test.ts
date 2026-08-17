@@ -116,6 +116,10 @@ test('لا يلتقط رقم الأقساط أو القسط ككود أو سعر
   assert.equal(record.price, '4,600,000')
 })
 
+test('يستخرج كود العقار من الصيغة العربية الكاملة', () => {
+  assert.equal(parseSmartText('كود العقار: BDR-214').record.code, 'BDR-214')
+})
+
 test('يستخرج الكود من الصيغ العربية والإنجليزية', () => {
   assert.equal(parseSmartText('كود: S89').record.code, 'S89')
   assert.equal(parseSmartText('Code A-12').record.code, 'A-12')
