@@ -51,9 +51,10 @@ function exportCsv(record: PropertyRecord) {
 }
 
 function exportJson(record: PropertyRecord) {
-  const payload = { ...buildLabeledRow(record), exportedAt: new Date().toISOString() }
+  // JSON يجب أن يحتوي على السجل الأصلي بمفاتيحه البرمجية، وليس صف CSV بمفاتيح العرض العربية.
+  const json = `${JSON.stringify(record, null, 2)}\n`
   triggerDownload(
-    new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }),
+    new Blob([json], { type: 'application/json;charset=utf-8' }),
     `${baseFilename(record)}.json`,
   )
 }
