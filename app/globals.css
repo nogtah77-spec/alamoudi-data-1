@@ -84,7 +84,7 @@
   --background-overlay: oklch(0.08 0.02 245 / 0.34);
   --background-image: url('/real-estate-day-bg.png');
   --background-blur: 2px;
-  --header-surface: linear-gradient(112deg, oklch(0.27 0.065 245 / 0.96) 0%, oklch(0.34 0.075 245 / 0.9) 48%, oklch(0.24 0.055 245 / 0.96) 100%);
+  --header-surface: linear-gradient(180deg, oklch(0 0 0 / 0.34) 0%, oklch(0 0 0 / 0.14) 48%, oklch(0 0 0 / 0.04) 100%), linear-gradient(112deg, oklch(0.27 0.065 245 / 0.96) 0%, oklch(0.34 0.075 245 / 0.9) 48%, oklch(0.24 0.055 245 / 0.96) 100%);
   --header-border: oklch(0.54 0.07 245 / 0.56);
   --header-glow: oklch(0.42 0.09 245 / 0.22);
 }
@@ -125,7 +125,7 @@
   --sidebar-ring: oklch(0.82 0.105 82);
   --background-image: url('/real-estate-professional-bg.png');
   --background-blur: 1.5px;
-  --header-surface: oklch(0.18 0.045 245 / 0.95);
+  --header-surface: linear-gradient(180deg, oklch(0 0 0 / 0.42) 0%, oklch(0 0 0 / 0.2) 52%, oklch(0 0 0 / 0.08) 100%), linear-gradient(112deg, oklch(0.14 0.035 245 / 0.98) 0%, oklch(0.21 0.05 245 / 0.95) 48%, oklch(0.12 0.03 245 / 0.98) 100%);
   --header-border: oklch(0.55 0.11 82 / 0.42);
   --header-glow: oklch(0.52 0.13 82 / 0.12);
 }
