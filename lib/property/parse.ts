@@ -142,7 +142,7 @@ function buildResidualDescription(text: string, record: PropertyRecord) {
   const fieldLabel = /^(?:الكود|كود العقار|العنوان|اسم العقار|النوع|نوع العقار|نوع العملية|الفئة|السعر|المطلوب|المساحة|غرف(?: النوم)?|عدد غرف النوم|حمام(?:ات)?|عدد الحمامات|الحمامات|الدور|عدد الأدوار|نوع الطابق|التشطيب|حالة التشطيب|الفيو|الواجهة|اتجاه(?: العقار)?|الاتجاه|ماستر|أسانسير|يوجد أسانسير|عدد الشرفات|شرفة|يوجد جراج|جراج|العملة|المقدم|المبلغ المتبقي|عدد الأقساط|عدد الأقساط المتبقية|قيمة القسط|دورية السداد|مدة التقسيط|التسليم|موعد التسليم|الحالة|حالة العقار|الحالة القانونية|الموقف من التسجيل|طريقة السداد|قابل للتفاوض|المدينة|المنطقة|الحي|رابط|المعلن|اسم المصدر|رقم المصدر|رقم الهاتف|الهاتف|واتساب|المسوق|اسم المسوق|الموظف المسؤول)\s*(?:[:：-]|$)/i
   const sectionHeading = /^(?:التفاصيل المالية|المميزات والمواصفات|المواصفات|بيانات العقار|الموقع|للتواصل|للتفاصيل|المميزات)\s*:?$/i
   const rawLines = text.split(/\r?\n/).map((line) => line.replace(bullet, '').trim()).filter(Boolean)
-  const lines = rawLines.flatMap((line) => line.split(/[،,](?=\s*(?:الكود|السعر|المساحة|المقدم|المدينة|المنطق������|الحي|الهاتف|المميزات|الواجهة|الاتجاه|قابل\s+للتفاوض)(?:\s*[:：-]|\s))/i))
+  const lines = rawLines.flatMap((line) => line.split(/[،,](?=\s*(?:الكود|السعر|المساحة|المقدم|المدينة|المنطق��������|الحي|الهاتف|المميزات|الواجهة|الاتجاه|قابل\s+للتفاوض)(?:\s*[:：-]|\s))/i))
   const residual: string[] = []
   for (const [index, rawLine] of lines.entries()) {
     let line = rawLine.replace(bullet, '').trim().replace(/[.;؛]+$/, '').trim()
@@ -378,13 +378,11 @@ export function parseSmartText(rawText: string): ParseResult {
 
   // (?<![\u0600-\u06FFA-Za-z]) يمنع مطابقة الكلمة المفتاحية عند ظهورها كجزء
   // من كلمة أطول (مثل "حي" داخل "أحيانًا")، إذ لا تفصل \b بين حرفين عربيين.
-  // الموقع الداخلي: نقرأ المنطقة كسطر مستقل أولًا، ثم ندعم "منطقة B12" داخل أي سطر.
-  // fallback الأكواد مهم لإعلانات مدينتي التي تذكر B12 دون كلمة "منطقة".
-  const regionCode = /(?:^|[\s\n\r،,؛;:()-])([A-Z]{1,3}\s*[-/]?\s*\d{1,3})(?=$|[\s\n\r،,؛:.])/im.exec(text)?.[1]?.replace(/\s+/g, '') || ''
-  const regionCandidates = Array.from(text.matchAll(/(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,–—-]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s*$|[،,])/gi))
+  // لا نعتبر الأكواد المنفردة أسماء مناطق؛ المنطقة تُستخرج فقط عند وجود تسمية صريحة.
+  const regionCandidates = Array.from(text.matchAll(/(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,–—-]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s*$)/gim))
     .map((match) => match[1].trim())
-    .filter((value) => value && !/^(?:شرق\s+القاهرة|east\s+cairo|هادئة|هادئ|رئيسية|مميزة)$/i.test(value))
-  const region = regionCode || regionCandidates[0] || ''
+    .filter((value) => value && !/^(?:شرق\s+القاهرة|east\s+cairo|هادئة(?:\s|$)|هادئ(?:\s|$)|رئيسية(?:\s|$)|مميزة(?:\s|$))/i.test(value))
+  const region = regionCandidates[0] || ''
   const normalizedRegion = region.trim()
   if (normalizedRegion && !/^(?:شرق\s+القاهرة|east\s+cairo)$/i.test(normalizedRegion)) {
     record.region = normalizedRegion

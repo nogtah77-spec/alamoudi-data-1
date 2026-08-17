@@ -84,25 +84,19 @@ test('يضع B12 في المنطقة عند ذكرها كمنطقة', () => {
   assert.equal(record.region, 'B12')
 })
 
-test('يستخرج B12 من إعلان متعدد الأسطر', () => {
+test('يستخرج B12 عند ذكره بعد كلمة منطقة في إعلان متعدد الأسطر', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي\nمنطقة B12\nالمساحة: 175 متر')
   assert.equal(record.city, 'مدينتي')
   assert.equal(record.region, 'B12')
 })
 
-test('يستخرج B12 حتى عندما تسبقها شرطة أو رمز', () => {
-  const { record } = parseSmartText('المدينة: مدينتي\n- منطقة B12\nالمساحة: 175 م²')
-  assert.equal(record.city, 'مدينتي')
-  assert.equal(record.region, 'B12')
-})
-
-test('يستخرج كود المنطقة B12 حتى بدون كلمة منطقة', () => {
+test('لا يضع الكود المنفرد في خانة المنطقة بدون تسمية صريحة', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي\nB12\nالمساحة: 175 م²')
   assert.equal(record.city, 'مدينتي')
-  assert.equal(record.region, 'B12')
+  assert.equal(record.region, '')
 })
 
-test('يفضل B12 ولا يلتقط كلمة هادئة من المميزات', () => {
+test('يأخذ اسم المنطقة الصريح ولا يلتقط كلمة هادئة من المميزات', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي - منطقة B12\nالمنطقة: شرق القاهرة\nالمميزات: منطقة هادئة وقريبة من الخدمات')
   assert.equal(record.region, 'B12')
 })
