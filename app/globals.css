@@ -130,6 +130,25 @@
   --header-glow: oklch(0 0 0 / 0.14);
 }
 
+.day-header-separator {
+  position: relative;
+}
+
+.day-header-separator::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: -2px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, oklch(0.2 0.06 245 / 0.7) 18%, oklch(0.25 0.075 245 / 0.92) 50%, oklch(0.2 0.06 245 / 0.7) 82%, transparent 100%);
+  box-shadow: 0 1px 8px oklch(0.2 0.06 245 / 0.22);
+  pointer-events: none;
+}
+
+.dark .day-header-separator::after {
+  display: none;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
