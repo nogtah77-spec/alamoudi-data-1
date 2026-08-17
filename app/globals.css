@@ -139,9 +139,9 @@
   position: absolute;
   inset-inline: 0;
   bottom: -2px;
-  height: 3px;
-  background: linear-gradient(90deg, transparent 0%, oklch(0.2 0.06 245 / 0.7) 18%, oklch(0.25 0.075 245 / 0.92) 50%, oklch(0.2 0.06 245 / 0.7) 82%, transparent 100%);
-  box-shadow: 0 1px 8px oklch(0.2 0.06 245 / 0.22);
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, oklch(0.2 0.06 245 / 0.58) 18%, oklch(0.25 0.075 245 / 0.78) 50%, oklch(0.2 0.06 245 / 0.58) 82%, transparent 100%);
+  box-shadow: 0 1px 6px oklch(0.2 0.06 245 / 0.16);
   pointer-events: none;
 }
 

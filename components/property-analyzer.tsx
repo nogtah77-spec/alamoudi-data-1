@@ -143,7 +143,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
 
   return (
     <main dir="rtl" className="min-h-screen bg-transparent text-foreground">
-      <header className="day-header-separator sticky top-0 z-40 border-b border-[var(--header-border)] bg-transparent shadow-[0_10px_28px_-18px_var(--header-glow)] backdrop-blur-2xl" style={{ backgroundImage: 'var(--header-surface)' }}>
+      <header className="day-header-separator fixed inset-x-0 top-0 z-40 border-b border-[var(--header-border)] bg-transparent shadow-[0_10px_28px_-18px_var(--header-glow)] backdrop-blur-2xl" style={{ backgroundImage: 'var(--header-surface)', position: 'fixed', insetInline: 0, top: 0 }}>
         <div className="mx-auto flex max-w-[1280px] flex-col gap-4 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <span className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/35 bg-primary/10 shadow-md ring-1 ring-primary/15">
@@ -183,7 +183,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1280px] items-start gap-6 px-4 py-6 sm:px-8 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-7">
+      <div className="mx-auto grid max-w-[1280px] items-start gap-6 px-4 pb-6 pt-24 sm:px-8 sm:pt-20 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-7">
         <div className="flex flex-col gap-5 lg:sticky lg:top-6 lg:self-start">
           <IntakePanel
             onFile={handleFile}
