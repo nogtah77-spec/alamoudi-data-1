@@ -161,7 +161,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
               <p className="mt-0.5 hidden max-w-[420px] truncate text-xs text-muted-foreground sm:block">تنظيم التفاصيل العقارية وتوزيعها في خانات جاهزة للتصدير</p>
             </div>
           </div>
-          <div className="flex w-full items-center gap-2 overflow-x-auto sm:w-auto sm:justify-end">
+          <div className="flex w-full items-center gap-2 overflow-visible sm:w-auto sm:justify-end">
             <div className="flex shrink-0 items-center gap-1 rounded-xl border border-border/70 bg-card/55 p-1 shadow-sm">
               <ThemeToggle />
             </div>
