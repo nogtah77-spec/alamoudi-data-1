@@ -146,8 +146,8 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
       <header className="border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex items-center gap-3">
-            <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-sm ring-1 ring-primary/10">
-              <Image src="/real-estate-mark-pro.png" alt="شعار محلل بيانات العقار" fill sizes="48px" className="object-contain p-1" priority />
+            <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-primary/30 bg-primary/10 shadow-md ring-1 ring-primary/20">
+              <Image src="/real-estate-mark-pro.png" alt="شعار محلل بيانات العقار" fill sizes="48px" className="scale-[2.35] object-cover" priority />
             </span>
             <div>
               <h1 className="text-base font-black tracking-tight">محلل بيانات العقار</h1>
