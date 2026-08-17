@@ -42,14 +42,58 @@ test('يحلل إعلانًا غنيًا دون خلط المبلغ المتبق
 })
 
 test('يستخرج الحقول المسبوقة بنقاط ويحافظ على القيم المالية', () => {
-  const { record } = parseSmartText('• السعر: 250\\n• 000 جنيه مصري\\n• المساحة: 175 م²\\n• الدور: الثالث\\n• المقدم: 250\\n• 000 جنيه\\n• قيمة القسط: 25\\n• 000 جنيه\\n• الحي: المرحلة الثالثة\\n• الموقف من التسجيل: قابل للتسجيل')
+  const { record } = parseSmartText(`• السعر: 250
+• 000 جنيه مصري
+• المساحة: 175 م²
+• الدور: الثالث
+• المقدم: 250
+• 000 جنيه
+• قيمة القسط: 25
+• 000 جنيه
+• الحي: المرحلة الثالثة
+• الموقف من التسجيل: قابل للتسجيل`)
   assert.equal(record.price, '250,000')
   assert.equal(record.size, '175')
   assert.equal(record.floor, 'الثالث')
   assert.match(record.downPayment, /250000/)
-  assert.match(record.installmentAmount, /250000/)
+  assert.match(record.installmentAmount, /25000/)
   assert.equal(record.district, 'المرحلة الثالثة')
   assert.equal(record.legalStatus, 'قابل للتسجيل')
+})
+
+test('يفصل مساحة البناء وغرف الماستر عن القيم الأساسية دون تعارض', () => {
+  const { record, conflicts } = parseSmartText('عدد غرف النوم: 3\nمنها 3 غرف ماستر\nالمساحة: 420 م²\nمساحة البناء: 315 م²')
+  assert.equal(record.beds, '3')
+  assert.equal(record.size, '420')
+  assert.equal(conflicts.includes('beds'), false)
+  assert.equal(conflicts.includes('size'), false)
+})
+
+test('يستخرج الطابق وسنة البناء دون خلط سنة البناء مع مساحة المباني', () => {
+  const { record } = parseSmartText(`نوع العقار: شقة سكنية
+المساحة: 145 م²
+الطابق: الثالث
+عدد غرف النوم: 3
+سنة البناء: 2023
+السعر: 2,850,000 جنيه مصري`)
+  assert.equal(record.floor, 'الثالث')
+  assert.equal(record.buildYear, '2023')
+  assert.equal(record.builtSize, '')
+  assert.equal(record.size, '145')
+})
+
+test('يستخرج عدد طوابق العمارة ولا يكرر الكود في المنطقة ويدعم وسيط وسمسار', () => {
+  const { record } = parseSmartText(`S 500
+الموقع: مدينة بدر، الحي الخامس
+الطابق: الثالث
+عدد طوابق العمارة: 5 طوابق
+وسيط
+بروكر
+سمسار`)
+  assert.equal(record.floorCount, '5')
+  assert.equal(record.floor, 'الثالث')
+  assert.equal(record.region, '')
+  assert.equal(record.listingType, 'وسيط')
 })
 
 test('يستخرج الواجهة من صيغة صريحة دون خلطها مع الفيو', () => {
@@ -70,6 +114,10 @@ test('لا يلتقط رقم الأقساط أو القسط ككود أو سعر
   const { record } = parseSmartText('المتبقي 10 أقساط، قيمة القسط 152 ألف، المطلوب 4,600,000، الكود S89')
   assert.equal(record.code, 'S89')
   assert.equal(record.price, '4,600,000')
+})
+
+test('يستخرج كود العقار من الصيغة العربية الكاملة', () => {
+  assert.equal(parseSmartText('كود العقار: BDR-214').record.code, 'BDR-214')
 })
 
 test('يستخرج الكود من الصيغ العربية والإنجليزية', () => {

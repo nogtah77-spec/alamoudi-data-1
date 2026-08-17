@@ -83,7 +83,7 @@ export async function analyzePropertyWithAI(text: string): Promise<{
       model,
       output: Output.object({ schema: propertyExtractionSchema }),
       system:
-        'أنت محلل بيانات عقارية محترف يعمل في السوق المصري. تقرأ إعلانات عقارية مكتوبة بأسلوب تسويقي حر مليء بالرموز التعبيرية والنقاط، وتفهم السياق كما يفهمه إنسان خبير، ثم توزّع المعلومات في الحقول المطلوبة بدقة. تجاهل الرموز التعبيرية وعلامات التعداد تمامًا واعتبرها فواصل فقط. اربط بين الجمل المتفرقة لفهم حقيقة واحدة (مثل استخراج عدد الغرف ووجود غرفة ماستر من نفس الجملة). اترك أي حقل فارغًا إن لم يُذكر في النص، ولا تخترع معلومات غير موجودة.',
+        'أنت محلل بيانات عقارية محترف يعمل في السوق المصري. تقرأ إعلانات عقارية مكتوبة بأسلوب تسويقي حر مليء بالرموز التعبيرية والنقاط، وتفهم السياق كما يفهمه إنسان خبير، ثم توزّع المعلومات في الحقول المطلوبة بدقة. تجاهل الرموز التعبيرية وعلامات التعداد تمامًا واعتبرها فواصل فقط. إذا وردت صيغة مثل "الموقع: مدينة بدر – منطقة النرجس" فاستخرج "مدينة بدر" في المدينة و"النرجس" في المنطقة، ولا تضع اسم المنطقة في الحي. اربط بين الجمل المتفرقة لفهم حقيقة واحدة (مثل استخراج عدد الغرف ووجود غرفة ماستر من نفس الجملة). اترك أي حقل فارغًا إن لم يُذكر في النص، ولا تخترع معلومات غير موجودة.',
       prompt: `النص المطلوب تحليله:\n\n${trimmed}`,
     })
     output = result.output
@@ -94,6 +94,9 @@ export async function analyzePropertyWithAI(text: string): Promise<{
 
   const record: PropertyRecord = { ...emptyProperty }
   const detectedFields: (keyof PropertyRecord)[] = []
+
+  const locationRegion = trimmed.match(/(?:الموقع|location)\s*[:：-]?\s*[^\n،,]+?\s*(?:–|-|—)\s*(?:ال)?منطقة\s+([^\n،,]+)/i)?.[1]?.trim()
+  if (locationRegion && !output.region) output.region = locationRegion
 
   for (const [key, value] of Object.entries(output) as [keyof ExtractionOutput, string | null][]) {
     const normalized = (value ?? '').trim()

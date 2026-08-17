@@ -143,35 +143,42 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
 
   return (
     <main dir="rtl" className="min-h-screen bg-transparent text-foreground">
-      <header className="border-b border-border bg-card/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1280px] flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <div className="flex items-center gap-3">
-            <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-sm ring-1 ring-primary/10">
-              <Image src="/real-estate-mark.png" alt="شعار محلل بيانات العقار" fill sizes="48px" className="object-cover" priority />
+      <header className="sticky top-0 z-40 border-b border-primary/35 bg-[color-mix(in_oklab,var(--background)_90%,var(--primary)_10%)]/95 shadow-[0_8px_24px_-16px_color-mix(in_oklab,var(--primary)_18%,transparent)] backdrop-blur-2xl">
+        <div className="mx-auto flex max-w-[1280px] flex-col gap-4 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-primary/35 bg-primary/10 shadow-md ring-1 ring-primary/15">
+              <Image src="/real-estate-mark-pro.png" alt="شعار محلل بيانات العقار" fill sizes="44px" className="scale-[2.35] object-cover" priority />
             </span>
-            <div>
-              <h1 className="text-base font-black tracking-tight">محلل بيانات العقار</h1>
-              <p className="text-xs text-muted-foreground">رفع ملف أو لصق تفاصيل غير مرتبة، وتوزيعها في خانات جاهزة للتصدير</p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="truncate text-base font-black tracking-tight">محلل بيانات العقار</h1>
+                <span className="hidden rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary sm:inline-flex">PRO</span>
+              </div>
+              <p className="mt-0.5 hidden max-w-[420px] truncate text-xs text-muted-foreground sm:block">تنظيم التفاصيل العقارية وتوزيعها في خانات جاهزة للتصدير</p>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <ThemeToggle />
+          <div className="flex w-full items-center gap-2 overflow-x-auto sm:w-auto sm:justify-end">
+            <div className="flex shrink-0 items-center gap-1 rounded-xl border border-border/70 bg-card/55 p-1 shadow-sm">
+              <ThemeToggle />
+            </div>
             <Link
               href="/agents"
-              className="flex h-11 items-center gap-2 rounded-xl border border-border px-4 text-sm font-bold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              className="flex h-10 shrink-0 items-center gap-2 rounded-xl border border-border/70 bg-card/45 px-3.5 text-sm font-bold text-muted-foreground shadow-sm transition hover:border-primary/35 hover:bg-primary/10 hover:text-foreground"
             >
               <Settings size={15} />
-              وكلاء الذكاء الاصطناعي
+              <span className="hidden md:inline">وكلاء الذكاء الاصطناعي</span>
+              <span className="md:hidden">الوكلاء</span>
             </Link>
             <button
               type="button"
               onClick={handleReset}
-              className="flex h-11 items-center gap-2 rounded-xl border border-border px-4 text-sm font-bold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              className="flex h-10 shrink-0 items-center gap-2 rounded-xl border border-border/70 bg-card/45 px-3.5 text-sm font-bold text-muted-foreground shadow-sm transition hover:border-primary/35 hover:bg-primary/10 hover:text-foreground"
             >
               <RotateCcw size={15} />
-              بدء عقار جديد
+              <span className="hidden md:inline">بدء عقار جديد</span>
+              <span className="md:hidden">جديد</span>
             </button>
-            <ExportMenu record={record} disabled={!record.title.trim()} />
+            <div className="shrink-0"> <ExportMenu record={record} disabled={!record.title.trim()} /> </div>
           </div>
         </div>
       </header>

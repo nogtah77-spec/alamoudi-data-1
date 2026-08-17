@@ -11,6 +11,20 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { parseSmartText } from './parse'
 
+test('يتعرف على المدن والمناطق والبلوكات من قاموس نطاق العمل', () => {
+  const shorouk = parseSmartText('الموقع: مدينة الشروق، المنطقة الخامسة').record
+  assert.equal(shorouk.city, 'مدينة الشروق')
+  assert.equal(shorouk.region, 'الخامسة')
+
+  const narges = parseSmartText('الموقع: التجمع الخامس، حي النرجس').record
+  assert.equal(narges.city, 'التجمع')
+  assert.equal(narges.district, 'النرجس')
+
+  const madinaty = parseSmartText('مدينتي - بلوك B12').record
+  assert.equal(madinaty.city, 'مدينتي')
+  assert.equal(madinaty.district, 'B12')
+})
+
 test('لا يُستخرج الحي من كلمة "أحيانًا" التي تحتوي على "حي" كجزء منها', () => {
   const { record } = parseSmartText('شقة للبيع، وأحيانًا يباع بسعر أعلى')
   assert.equal(record.district, '')
@@ -27,6 +41,12 @@ test('لا تُستخرج المنطقة من كلمة تحتوي على "منط
   // هي بقية الجملة كما وردت — لا اختراع ولا حذف صمت، فقط تحقق من عدم انهيار
   // السلوك مع سياقات نصية طبيعية.
   assert.equal(record.region, 'راقية بمواصفات عالية')
+})
+
+test('يستخرج النرجس من موقع مدينة بدر بصيغة مدينة ثم منطقة', () => {
+  const { record } = parseSmartText('الموقع: مدينة بدر – منطقة النرجس')
+  assert.equal(record.city, 'بدر')
+  assert.equal(record.region, 'النرجس')
 })
 
 test('يستخرج المنطقة والمدينة معًا دون تعارض في نفس النص', () => {
@@ -78,25 +98,19 @@ test('يضع B12 في المنطقة عند ذكرها كمنطقة', () => {
   assert.equal(record.region, 'B12')
 })
 
-test('يستخرج B12 من إعلان متعدد الأسطر', () => {
+test('يستخرج B12 عند ذكره بعد كلمة منطقة في إعلان متعدد الأسطر', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي\nمنطقة B12\nالمساحة: 175 متر')
   assert.equal(record.city, 'مدينتي')
   assert.equal(record.region, 'B12')
 })
 
-test('يستخرج B12 حتى عندما تسبقها شرطة أو رمز', () => {
-  const { record } = parseSmartText('المدينة: مدينتي\n- منطقة B12\nالمساحة: 175 م²')
-  assert.equal(record.city, 'مدينتي')
-  assert.equal(record.region, 'B12')
-})
-
-test('يستخرج كود المنطقة B12 حتى بدون كلمة منطقة', () => {
+test('لا يضع الكود المنفرد في خانة المنطقة بدون تسمية صريحة', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي\nB12\nالمساحة: 175 م²')
   assert.equal(record.city, 'مدينتي')
-  assert.equal(record.region, 'B12')
+  assert.equal(record.region, '')
 })
 
-test('يفضل B12 ولا يلتقط كلمة هادئة من المميزات', () => {
+test('يأخذ اسم المنطقة الصريح ولا يلتقط كلمة هادئة من المميزات', () => {
   const { record } = parseSmartText('شقة للبيع في مدينتي - منطقة B12\nالمنطقة: شرق القاهرة\nالمميزات: منطقة هادئة وقريبة من الخدمات')
   assert.equal(record.region, 'B12')
 })

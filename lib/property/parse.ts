@@ -13,6 +13,7 @@ import {
   isNegatedAt,
   LEGAL_STATUS_TERMS,
   LISTING_TYPE_ALIASES,
+  LOCATION_ALIASES,
   matchAssertivePhrase,
   matchFirstTerm,
   NEGOTIABLE_KEYWORDS,
@@ -45,8 +46,14 @@ export type ParseResult = {
  * أول رقم موجود مع الإشارة إلى وجود تعارض (Smart Analyzer v2.0: "التعارض يُحفظ لا يُحسم").
  */
 function matchExplicitCode(text: string): string {
-  const match = text.match(/(?:الكود|كود|code|رقم\s+(?:الوحدة|العقار))\s*[:：-]?\s*([A-Za-zА-Яа-яء-ي][A-Za-zА-Яа-яء-ي0-9_-]{1,19}|\d{2,20})/i) || text.match(/(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?([A-Z]{1,3}\s*[-/]?\s*\d{1,3})\s*$/im)
+  const match = text.match(/(?:كود\s+العقار|رقم\s+(?:الوحدة|العقار)|الكود|كود|code)\s*[:：-]?\s*([A-Za-zА-Яа-яء-ي][A-Za-zА-Яа-яء-ي0-9_-]{1,19}|\d{2,20})/i) || text.match(/(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?([A-Z]{1,3}\s*[-/]?\s*\d{1,3})\s*$/im)
   return match?.[1]?.trim() ?? ''
+}
+
+function matchExplicitNumber(text: string, pattern: RegExp): string {
+  const match = text.match(pattern)
+  const parsed = match?.[1] ? parseHumanNumber(match[1]) : null
+  return parsed === null || parsed === undefined ? '' : String(parsed)
 }
 
 function matchNumber(text: string, patterns: RegExp[]): { value: string; conflict: boolean } {
@@ -136,7 +143,7 @@ function buildResidualDescription(text: string, record: PropertyRecord) {
   const fieldLabel = /^(?:الكود|كود العقار|العنوان|اسم العقار|النوع|نوع العقار|نوع العملية|الفئة|السعر|المطلوب|المساحة|غرف(?: النوم)?|عدد غرف النوم|حمام(?:ات)?|عدد الحمامات|الحمامات|الدور|عدد الأدوار|نوع الطابق|التشطيب|حالة التشطيب|الفيو|الواجهة|اتجاه(?: العقار)?|الاتجاه|ماستر|أسانسير|يوجد أسانسير|عدد الشرفات|شرفة|يوجد جراج|جراج|العملة|المقدم|المبلغ المتبقي|عدد الأقساط|عدد الأقساط المتبقية|قيمة القسط|دورية السداد|مدة التقسيط|التسليم|موعد التسليم|الحالة|حالة العقار|الحالة القانونية|الموقف من التسجيل|طريقة السداد|قابل للتفاوض|المدينة|المنطقة|الحي|رابط|المعلن|اسم المصدر|رقم المصدر|رقم الهاتف|الهاتف|واتساب|المسوق|اسم المسوق|الموظف المسؤول)\s*(?:[:：-]|$)/i
   const sectionHeading = /^(?:التفاصيل المالية|المميزات والمواصفات|المواصفات|بيانات العقار|الموقع|للتواصل|للتفاصيل|المميزات)\s*:?$/i
   const rawLines = text.split(/\r?\n/).map((line) => line.replace(bullet, '').trim()).filter(Boolean)
-  const lines = rawLines.flatMap((line) => line.split(/[،,](?=\s*(?:الكود|السعر|المساحة|المقدم|المدينة|المنطقة|الحي|الهاتف|المميزات|الواجهة|الاتجاه|قابل\s+للتفاوض)(?:\s*[:：-]|\s))/i))
+  const lines = rawLines.flatMap((line) => line.split(/[،,](?=\s*(?:الكود|السعر|المساحة|المقدم|الم��ينة|المنطق����������|الحي|الهاتف|المميزات|الواجهة|الاتجاه|قابل\s+للتفاوض)(?:\s*[:：-]|\s))/i))
   const residual: string[] = []
   for (const [index, rawLine] of lines.entries()) {
     let line = rawLine.replace(bullet, '').trim().replace(/[.;؛]+$/, '').trim()
@@ -167,7 +174,7 @@ function normalizeAnalyzerText(rawText: string) {
   let previous = ''
   while (previous !== text) {
     previous = text
-    text = text.replace(/(\d)\s*\n\s*(\d{3})(?=\s*(?:جنيه|جنيه مصري|ريال|درهم|$|\n))/g, '$1$2')
+    text = text.replace(/(\d|[٠-٩])\s*\r?\n\s*(\d{3}|[٠-٩]{3})/g, '$1$2')
   }
   return text
 }
@@ -223,29 +230,44 @@ export function parseSmartText(rawText: string): ParseResult {
   const currency = matchOption(text, referenceOptions.currencies, CURRENCY_ALIASES)
   if (currency) { record.currency = currency; detectedFields.push('currency') }
 
-  const size = matchNumber(text, [
-    /(?:المساحة|مساحة|size)\s*[:：]?\s*([\d,.٫٠-٩]+)\s*(?:م2|م²|متر|sqm|sqft)?/i,
-    /([\d,.٫٠-٩]+)\s*(?:م2|م²|متر مربع|متر|sqm|sqft)/i,
-    // صيغة شائعة جدًا في إعلانات العقارات المصرية: رقم ملتصق مباشرة بحرف "م"
-    // بدون فاصل (مثل "320م")، لا يجوز الخلط بينها وبين "م" كحرف وحي�� ملتبس؛
-    // الشرط الملزم هنا هو الالتصاق المباشر برقم وعدم اتباعها بحرف عربي آخر.
-    /([\d,.٫٠-٩]+)\s?م(?![\u0600-\u06FF])/,
-  ])
+  const explicitSize = matchExplicitNumber(text, /(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?المساحة\s*[:：-]\s*([\d,.٫٠-٩]+)/im)
+  const size = explicitSize
+    ? { value: explicitSize, conflict: false }
+    : matchNumber(text, [
+        /(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?المساحة\s*[:：-]\s*([\d,.٫٠-٩]+)/im,
+        /([\d,.٫٠-٩]+)\s*(?:م2|م²|متر مربع|متر|sqm|sqft)/i,
+        /([\d,.٫٠-٩]+)\s?م(?![\u0600-\u06FF])/,
+      ])
   if (size.value) {
     record.size = size.value
     detectedFields.push('size')
     if (size.conflict) { detectedFields.push('size_conflict'); conflicts.push('size') }
   }
 
-  const beds = matchNumber(text, [
-    /(?:غرف النوم|غرف|beds|bedrooms)\s*[:：]?\s*([\d٠-٩]+)/i,
-    /([\d٠-٩]+)\s*(?:غرف نوم|غرف)/i,
-  ])
+  const builtSize = matchExplicitNumber(text, /(?:مساحة\s+(?:المباني|البناء))\s*[:：-]?\s*([\d,.٫٠-٩]+)/i)
+  if (builtSize) { record.builtSize = builtSize; detectedFields.push('builtSize') }
+
+  const buildYear = matchExplicitNumber(text, /(?:سنة\s+(?:البناء|الإنشاء)|عام\s+البناء|سنة\s+التشييد)\s*[:：-]?\s*(\d{4})/i)
+  if (buildYear) { record.buildYear = buildYear; detectedFields.push('buildYear') }
+
+  const landSize = matchExplicitNumber(text, /(?:مساحة\s+(?:الأرض|الارض)|الأرض|الارض)\s*[:：-]?\s*([\d,.٫٠-٩]+)/i)
+  if (landSize) { record.landSize = landSize; detectedFields.push('landSize') }
+
+  const explicitBeds = matchExplicitNumber(text, /(?:عدد\s+غرف\s+النوم|غرف\s+النوم)\s*[:：-]\s*([\d٠-٩]+)/i)
+  const beds = explicitBeds
+    ? { value: explicitBeds, conflict: false }
+    : matchNumber(text, [
+        /(?:غرف النوم|beds|bedrooms)\s*[:：-]?\s*([\d٠-٩]+)/i,
+        /([\d٠-٩]+)\s*(?:غرف نوم|غرف)(?!\s*ماستر)/i,
+      ])
   if (beds.value) {
     record.beds = beds.value
     detectedFields.push('beds')
     if (beds.conflict) { detectedFields.push('beds_conflict'); conflicts.push('beds') }
   }
+
+  const masterBedrooms = matchExplicitNumber(text, /(?:منها|منهم|عدد\s+غرف\s+الماستر|غرف\s+الماستر|غرف\s+ماستر)\s*[:：-]?\s*([\d٠-٩]+)/i)
+  if (masterBedrooms) { record.masterBedrooms = masterBedrooms; detectedFields.push('masterBedrooms') }
 
   const baths = matchNumber(text, [
     /(?:الحمامات|حمامات|حمام|baths|bathrooms)\s*[:：]?\s*([\d.٫٠-٩]+)/i,
@@ -273,15 +295,28 @@ export function parseSmartText(rawText: string): ParseResult {
     : matchOption(text, referenceOptions.facades, FACADE_ALIASES)
   if (facade) { record.facade = facade; detectedFields.push('facade') }
 
-  const explicitFloor = text.match(/(?:الدور|دور|رقم\s+الدور)\s*[:：-]?\s*(?:الدور\s+)?([^\n،,\.]+)/i)?.[1]?.trim()
+  const explicitFloor = text.match(/(?:الدور|الطابق|الطابقية|دور|رقم\s+(?:الدور|الطابق))\s*[:：-]?\s*(?:الدور|الطابق)\s+([^\n،,.]+)/i)?.[1]?.trim() || text.match(/(?:الدور|الطابق|الطابقية|دور|رقم\s+(?:الدور|الطابق))\s*[:：-]?\s*([^\n،,.]+)/i)?.[1]?.trim()
   if (explicitFloor) {
     const floorValue = explicitFloor.split(/\s+(?:بفيو|بإطلالة|مع|ويوجد|وبـ)\s+/i)[0].trim()
     record.floor = floorValue
     detectedFields.push('floor')
   }
 
+  const floorCountMatch = text.match(/(?:عدد\s+(?:طوابق|الطوابق|أدوار|الأدوار)|طوابق\s+العمارة|أدوار\s+العمارة|floors?)\s*[:：-]?\s*([\d٠-٩]+)/i)
+  if (floorCountMatch?.[1]) {
+    const floorCount = parseHumanNumber(floorCountMatch[1])
+    if (floorCount !== null && floorCount !== undefined) { record.floorCount = String(floorCount); detectedFields.push('floorCount') }
+  }
+
   const floorType = matchOption(text, referenceOptions.floors, FLOOR_ALIASES)
   if (floorType) { record.floorType = floorType; detectedFields.push('floorType') }
+
+  const roofMatch = text.match(/(?:يوجد\s+)?(?:روف|الروف|roof)(?:\s*(?:[:：-]|مساحته|مساحة)\s*([\d,.٫٠-٩]+)\s*(?:م2|م²|متر)?|\s*[:：-]?\s*(نعم|موجود))?/i)
+  if (roofMatch) {
+    const roofArea = roofMatch[1] ? parseHumanNumber(roofMatch[1]) : null
+    record.roof = roofArea !== null && roofArea !== undefined ? String(roofArea) : 'نعم'
+    detectedFields.push('roof')
+  }
 
   const category = matchOption(text, referenceOptions.categories, CATEGORY_ALIASES)
   if (category) { record.category = category; detectedFields.push('category') }
@@ -344,13 +379,17 @@ export function parseSmartText(rawText: string): ParseResult {
 
   // (?<![\u0600-\u06FFA-Za-z]) يمنع مطابقة الكلمة المفتاحية عند ظهورها كجزء
   // من كلمة أطول (مثل "حي" داخل "أحيانًا")، إذ لا تفصل \b بين حرفين عربيين.
-  // الموقع الداخلي: نقرأ المنطقة كسطر مستقل أولًا، ثم ندعم "منطقة B12" داخل أي سطر.
-  // fallback الأكواد مهم لإعلانات مدينتي التي تذكر B12 دون كلمة "منطقة".
-  const regionCode = /(?:^|[\s\n\r،,؛;:()-])([A-Z]{1,3}\s*[-/]?\s*\d{1,3})(?=$|[\s\n\r،,؛;:.])/im.exec(text)?.[1]?.replace(/\s+/g, '')
-  const regionCandidates = Array.from(text.matchAll(/(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s*$|[،,])/gi))
+  // لا نعتبر الأكواد المنفردة أسماء مناطق؛ المنطقة تُستخرج فقط عند وجود تسمية صريحة.
+  const regionCandidates = Array.from(text.matchAll(/(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,–—-]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s*$)/gim))
     .map((match) => match[1].trim())
-    .filter((value) => value && !/^(?:شرق\s+القاهرة|east\s+cairo|هادئة|هادئ|رئيسية|مميزة)$/i.test(value))
-  const region = regionCode || regionCandidates[0] || ''
+    .filter((value) => value && !/^(?:شرق\s+القاهرة|east\s+cairo|هادئة(?:\s|$)|هادئ(?:\s|$)|رئيسية(?:\s|$)|مميزة(?:\s|$))/i.test(value))
+  const locationMatches = LOCATION_ALIASES
+    .flatMap((entry) => entry.aliases.map((alias) => ({ ...entry, alias })))
+    .sort((a, b) => b.alias.length - a.alias.length)
+    .map((entry) => ({ ...entry, index: normalizeForMatch(text).indexOf(normalizeForMatch(entry.alias)) }))
+    .filter((entry) => entry.index >= 0)
+  const namedLocation = locationMatches[0]
+  const region = regionCandidates[0] || (namedLocation?.type === 'region' ? namedLocation.canonical.replace(/^المنطقة\s+/i, '') : '')
   const normalizedRegion = region.trim()
   if (normalizedRegion && !/^(?:شرق\s+القاهرة|east\s+cairo)$/i.test(normalizedRegion)) {
     record.region = normalizedRegion
@@ -370,6 +409,7 @@ export function parseSmartText(rawText: string): ParseResult {
   // يدعم الصياغة الطبيعية: "مدينة الشروق الحي الثامن" و"التجمع الخامس حي البنفسج".
   const districtFromLocation = text.match(/(?:مدينة\s+الشروق|التجمع\s+الخامس|مدينتي|بدر)\s+(?:في\s+)?(?:الحي|حي)\s+([^\n،,]+?)(?=\s+(?:شرق\s+القاهرة|east\s+cairo)(?:\s|$)|\s*$|[،,])/i)?.[1]?.trim()
   const district = districtFromLocation
+    || (namedLocation?.type === 'district' || namedLocation?.type === 'block' ? namedLocation.canonical.replace(/^الحي\s+/i, '') : '')
     || text.match(/(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?(?:الحي|حي|district)\s*[:：-]?\s*([^\n\r،,]+)/im)?.[1]?.trim()
     || text.match(/(?<![\u0600-\u06FFA-Za-z])(?:الحي|حي|district)\s*[:：-]?\s*([^\n\r،,]+)/i)?.[1]?.trim()
   if (district && !record.district) {
@@ -404,10 +444,16 @@ const HEADER_ALIASES: Record<keyof PropertyRecord, string[]> = {
   title: ['العنوان', 'اسم العقار', 'title'],
   price: ['السعر', 'price'],
   size: ['المساحة', 'size'],
+  builtSize: ['مساحة المباني', 'مساحة البناء', 'builtSize'],
+  buildYear: ['سنة البناء', 'سنة الإنشاء', 'سنة التشييد', 'buildYear'],
+  landSize: ['مساحة الأرض', 'مساحة الارض', 'landSize'],
   beds: ['غرف النوم', 'غرف', 'beds'],
+  masterBedrooms: ['غرف الماستر', 'غرف ماستر', 'masterBedrooms'],
   baths: ['الحمامات', 'baths'],
   floor: ['الدور', 'floor'],
+  floorCount: ['عدد الطوابق', 'عدد الأدوار', 'floorCount'],
   floorType: ['نوع الطابق', 'floorType'],
+  roof: ['روف', 'الروف', 'roof'],
   master: ['ماست��', 'master'],
   elevator: ['أسانسير', 'elevator'],
   finishing: ['التشطيب', 'finishing'],

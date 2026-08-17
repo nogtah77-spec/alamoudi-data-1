@@ -81,7 +81,9 @@
   --sidebar-accent-foreground: oklch(0.93 0.012 95);
   --sidebar-border: oklch(0.37 0.06 245);
   --sidebar-ring: oklch(0.7 0.14 82);
-  --background-overlay: oklch(0.12 0 0 / 0.2);
+  --background-overlay: oklch(0.08 0.02 245 / 0.34);
+  --background-image: url('/real-estate-day-bg.png');
+  --background-blur: 2px;
 }
 
 .dark {
@@ -118,6 +120,8 @@
   --sidebar-accent-foreground: oklch(0.98 0.004 95);
   --sidebar-border: oklch(0.36 0.05 245);
   --sidebar-ring: oklch(0.82 0.105 82);
+  --background-image: url('/real-estate-professional-bg.png');
+  --background-blur: 1.5px;
 }
 
 @layer base {
@@ -127,14 +131,30 @@
   body {
     @apply bg-background text-foreground;
     background-color: var(--background);
-    background-image: linear-gradient(var(--background-overlay), var(--background-overlay)), url('/real-estate-midnight-gold-bg.png');
+    background-image: linear-gradient(var(--background-overlay), var(--background-overlay)), var(--background-image);
     background-position: center top;
     background-size: cover;
     background-attachment: fixed;
     background-blend-mode: normal;
+    position: relative;
+  }
+  body {
+    isolation: isolate;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: -8px;
+    z-index: -1;
+    pointer-events: none;
+    background-image: linear-gradient(var(--background-overlay), var(--background-overlay)), var(--background-image);
+    background-position: center top;
+    background-size: cover;
+    filter: blur(var(--background-blur));
+    transform: scale(1.02);
   }
   .dark body {
-    background-image: linear-gradient(color-mix(in oklch, var(--background) 62%, transparent), color-mix(in oklch, var(--background) 62%, transparent)), url('/real-estate-midnight-gold-bg.png');
+    background-image: none;
   }
   ::selection {
     background-color: color-mix(in oklch, var(--accent) 72%, transparent);

@@ -40,9 +40,9 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       aria-label={isDark ? 'تفعيل الوضع النهاري' : 'تفعيل الوضع الليلي'}
       title={isDark ? 'الوضع النهاري' : 'الوضع الليلي'}
-      className="group flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-bold text-muted-foreground shadow-sm transition hover:border-primary/50 hover:bg-muted hover:text-foreground"
+      className="group flex size-9 items-center justify-center rounded-lg border border-border bg-card text-sm font-bold text-muted-foreground shadow-sm transition hover:border-primary/50 hover:bg-muted hover:text-foreground"
     >
-      <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary/15">
+      <span className="flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary transition group-hover:bg-primary/15">
         {isDark ? <Sun size={16} strokeWidth={2.2} /> : <Moon size={16} strokeWidth={2.2} />}
       </span>
     </button>

@@ -14,10 +14,16 @@ export type PropertyRecord = {
   title: string
   price: string
   size: string
+  builtSize: string
+  landSize: string
+  buildYear: string
   beds: string
+  masterBedrooms: string
   baths: string
   floor: string
+  floorCount: string
   floorType: string
+  roof: string
   master: string
   elevator: string
   finishing: string
@@ -62,7 +68,7 @@ export const referenceOptions = {
   statuses: ['قيد المراجعة', 'جاهز للنشر', 'مباع', 'مؤجر', 'موقوف', 'غير متاح'],
   featured: ['نعم', 'لا'],
   listingTypes: ['مباشر', 'وسيط'],
-  floors: ['أرضي', 'متكرر', 'أخير', 'بدروم', 'روف', 'دوبلكس'],
+  floors: ['أرضي', 'متكرر', 'أخير', 'بدروم', 'دوبلكس'],
   finishings: ['متشطب', 'نص تشطيب', 'مفروش', 'سوبر لوكس', 'طوب أحمر', 'ألترا سوبر لوكس'],
   views: ['جنينة خاصة', 'فيو مفتوح', 'فيو جنينة', 'باركنج', 'فيو نادي + جنينة'],
   facades: ['أمامي', 'خلفي', 'خلفي جانبي', 'بحري', 'شرقي', 'غربي', 'قبلي'],
@@ -76,10 +82,16 @@ export const emptyProperty: PropertyRecord = {
   title: '',
   price: '',
   size: '',
+  builtSize: '',
+  landSize: '',
+  buildYear: '',
   beds: '',
+  masterBedrooms: '',
   baths: '',
   floor: '',
+  floorCount: '',
   floorType: '',
+  roof: '',
   master: '',
   elevator: '',
   finishing: '',
@@ -129,10 +141,16 @@ export const propertyFields: PropertyField[] = [
 
   { key: 'price', label: 'السعر', section: 'details', kind: 'number', required: true },
   { key: 'size', label: 'المساحة (م²)', section: 'details', kind: 'number' },
+  { key: 'builtSize', label: 'مساحة المباني (م²)', section: 'details', kind: 'number' },
+  { key: 'landSize', label: 'مساحة الأرض (م²)', section: 'details', kind: 'number' },
+  { key: 'buildYear', label: 'سنة البناء', section: 'details', kind: 'number' },
   { key: 'beds', label: 'غرف النوم', section: 'details', kind: 'number' },
+  { key: 'masterBedrooms', label: 'غرف الماستر', section: 'details', kind: 'number' },
   { key: 'baths', label: 'الحمامات', section: 'details', kind: 'number' },
   { key: 'floor', label: 'الدور', section: 'details', kind: 'text', placeholder: 'مثال: الثالث أو 3' },
+  { key: 'floorCount', label: 'عدد الطوابق', section: 'details', kind: 'number' },
   { key: 'floorType', label: 'نوع الطابق', section: 'details', kind: 'select', options: referenceOptions.floors },
+  { key: 'roof', label: 'روف', section: 'details', kind: 'text', placeholder: 'نعم أو المساحة بالمتر' },
   { key: 'finishing', label: 'التشطيب', section: 'details', kind: 'select', options: referenceOptions.finishings },
   { key: 'view', label: 'الفيو', section: 'details', kind: 'select', options: referenceOptions.views },
   { key: 'facade', label: 'الواجهة', section: 'details', kind: 'text', placeholder: 'أمامي / خلفي' },
