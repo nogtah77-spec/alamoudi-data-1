@@ -45,6 +45,10 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
     () => propertyFields.filter((field) => field.required && !record[field.key].trim()),
     [record],
   )
+  const hasExportableData = useMemo(
+    () => Object.values(record).some((value) => value.trim().length > 0),
+    [record],
+  )
   const completionFields = [
     'code', 'type', 'category', 'price', 'size', 'beds', 'baths',
     'floor', 'finishing', 'view', 'remainingAmount', 'installmentCount',
@@ -178,7 +182,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
               <span className="hidden md:inline">بدء عقار جديد</span>
               <span className="md:hidden">جديد</span>
             </button>
-            <div className="shrink-0"> <ExportMenu record={record} disabled={!record.title.trim()} /> </div>
+            <div className="shrink-0"> <ExportMenu record={record} disabled={!hasExportableData} /> </div>
           </div>
         </div>
       </header>
