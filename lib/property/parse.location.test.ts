@@ -11,6 +11,20 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { parseSmartText } from './parse'
 
+test('يتعرف على المدن والمناطق والبلوكات من قاموس نطاق العمل', () => {
+  const shorouk = parseSmartText('الموقع: مدينة الشروق، المنطقة الخامسة').record
+  assert.equal(shorouk.city, 'مدينة الشروق')
+  assert.equal(shorouk.region, 'الخامسة')
+
+  const narges = parseSmartText('الموقع: التجمع الخامس، حي النرجس').record
+  assert.equal(narges.city, 'التجمع')
+  assert.equal(narges.district, 'النرجس')
+
+  const madinaty = parseSmartText('مدينتي - بلوك B12').record
+  assert.equal(madinaty.city, 'مدينتي')
+  assert.equal(madinaty.district, 'B12')
+})
+
 test('لا يُستخرج الحي من كلمة "أحيانًا" التي تحتوي على "حي" كجزء منها', () => {
   const { record } = parseSmartText('شقة للبيع، وأحيانًا يباع بسعر أعلى')
   assert.equal(record.district, '')

@@ -13,6 +13,7 @@ import {
   isNegatedAt,
   LEGAL_STATUS_TERMS,
   LISTING_TYPE_ALIASES,
+  LOCATION_ALIASES,
   matchAssertivePhrase,
   matchFirstTerm,
   NEGOTIABLE_KEYWORDS,
@@ -142,7 +143,7 @@ function buildResidualDescription(text: string, record: PropertyRecord) {
   const fieldLabel = /^(?:الكود|كود العقار|العنوان|اسم العقار|النوع|نوع العقار|نوع العملية|الفئة|السعر|المطلوب|المساحة|غرف(?: النوم)?|عدد غرف النوم|حمام(?:ات)?|عدد الحمامات|الحمامات|الدور|عدد الأدوار|نوع الطابق|التشطيب|حالة التشطيب|الفيو|الواجهة|اتجاه(?: العقار)?|الاتجاه|ماستر|أسانسير|يوجد أسانسير|عدد الشرفات|شرفة|يوجد جراج|جراج|العملة|المقدم|المبلغ المتبقي|عدد الأقساط|عدد الأقساط المتبقية|قيمة القسط|دورية السداد|مدة التقسيط|التسليم|موعد التسليم|الحالة|حالة العقار|الحالة القانونية|الموقف من التسجيل|طريقة السداد|قابل للتفاوض|المدينة|المنطقة|الحي|رابط|المعلن|اسم المصدر|رقم المصدر|رقم الهاتف|الهاتف|واتساب|المسوق|اسم المسوق|الموظف المسؤول)\s*(?:[:：-]|$)/i
   const sectionHeading = /^(?:التفاصيل المالية|المميزات والمواصفات|المواصفات|بيانات العقار|الموقع|للتواصل|للتفاصيل|المميزات)\s*:?$/i
   const rawLines = text.split(/\r?\n/).map((line) => line.replace(bullet, '').trim()).filter(Boolean)
-  const lines = rawLines.flatMap((line) => line.split(/[،,](?=\s*(?:الكود|السعر|المساحة|المقدم|المدينة|المنطق��������|الحي|الهاتف|المميزات|الواجهة|الاتجاه|قابل\s+للتفاوض)(?:\s*[:：-]|\s))/i))
+  const lines = rawLines.flatMap((line) => line.split(/[،,](?=\s*(?:الكود|السعر|المساحة|المقدم|المدينة|المنطق����������|الحي|الهاتف|المميزات|الواجهة|الاتجاه|قابل\s+للتفاوض)(?:\s*[:：-]|\s))/i))
   const residual: string[] = []
   for (const [index, rawLine] of lines.entries()) {
     let line = rawLine.replace(bullet, '').trim().replace(/[.;؛]+$/, '').trim()
@@ -382,7 +383,13 @@ export function parseSmartText(rawText: string): ParseResult {
   const regionCandidates = Array.from(text.matchAll(/(?:المنطقة|منطقة|region)\s*[:：-]?\s*([^\n\r،,–—-]+?)(?=\s+(?:الحي|حي|district)(?:\s|$)|\s*$)/gim))
     .map((match) => match[1].trim())
     .filter((value) => value && !/^(?:شرق\s+القاهرة|east\s+cairo|هادئة(?:\s|$)|هادئ(?:\s|$)|رئيسية(?:\s|$)|مميزة(?:\s|$))/i.test(value))
-  const region = regionCandidates[0] || ''
+  const locationMatches = LOCATION_ALIASES
+    .flatMap((entry) => entry.aliases.map((alias) => ({ ...entry, alias })))
+    .sort((a, b) => b.alias.length - a.alias.length)
+    .map((entry) => ({ ...entry, index: normalizeForMatch(text).indexOf(normalizeForMatch(entry.alias)) }))
+    .filter((entry) => entry.index >= 0)
+  const namedLocation = locationMatches[0]
+  const region = regionCandidates[0] || (namedLocation?.type === 'region' ? namedLocation.canonical.replace(/^المنطقة\s+/i, '') : '')
   const normalizedRegion = region.trim()
   if (normalizedRegion && !/^(?:شرق\s+القاهرة|east\s+cairo)$/i.test(normalizedRegion)) {
     record.region = normalizedRegion
@@ -402,6 +409,7 @@ export function parseSmartText(rawText: string): ParseResult {
   // يدعم الصياغة الطبيعية: "مدينة الشروق الحي الثامن" و"التجمع الخامس حي البنفسج".
   const districtFromLocation = text.match(/(?:مدينة\s+الشروق|التجمع\s+الخامس|مدينتي|بدر)\s+(?:في\s+)?(?:الحي|حي)\s+([^\n،,]+?)(?=\s+(?:شرق\s+القاهرة|east\s+cairo)(?:\s|$)|\s*$|[،,])/i)?.[1]?.trim()
   const district = districtFromLocation
+    || (namedLocation?.type === 'district' || namedLocation?.type === 'block' ? namedLocation.canonical.replace(/^الحي\s+/i, '') : '')
     || text.match(/(?:^|[\n\r])\s*(?:[-•*▪◦]\s*)?(?:الحي|حي|district)\s*[:：-]?\s*([^\n\r،,]+)/im)?.[1]?.trim()
     || text.match(/(?<![\u0600-\u06FFA-Za-z])(?:الحي|حي|district)\s*[:：-]?\s*([^\n\r،,]+)/i)?.[1]?.trim()
   if (district && !record.district) {

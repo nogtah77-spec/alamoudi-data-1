@@ -192,10 +192,55 @@ export const FLOOR_ALIASES: CanonicalMap[] = buildMap(
 
 export const CITY_ALIASES: CanonicalMap[] = buildMap(
   [
-    { canonical: 'كمباوند وصال', aliases: ['كمبوند وصال', 'Compound Wesal', 'Compound Wasl', 'Wesal Compound', 'Wasl Compound'] },
+    { canonical: 'مدينة الشروق', aliases: ['الشروق', 'مدينة الشروق', 'new shorouk', 'el shorouk', 'shorouk'] },
+    { canonical: 'كمباوند وصال', aliases: ['كمبوند وصال', 'وصال', 'Compound Wesal', 'Compound Wasl', 'Wesal Compound', 'Wasl Compound'] },
+    { canonical: 'مدينتي', aliases: ['مدينتي', 'madinaty'] },
+    { canonical: 'بدر', aliases: ['مدينة بدر', 'بدر', 'badr city'] },
+    { canonical: 'هليوبليس الجديدة', aliases: ['هليوبوليس الجديدة', 'هليوبليس الجديدة', 'new heliopolis'] },
+    { canonical: 'التجمع', aliases: ['التجمع', 'القاهرة الجديدة', 'التجمع الخامس', 'new cairo', 'new cairo city'] },
+    { canonical: 'بيت الوطن', aliases: ['بيت الوطن', 'beit el watan', 'beit al watan'] },
+    { canonical: 'مدينة نصر', aliases: ['مدينة نصر', 'nasr city'] },
   ],
   referenceOptions.cities,
 )
+
+/** أسماء المواقع المعروفة في نطاق العمل. تُستخدم فقط مع سياق الموقع، وبأولوية المطابقة الأطول. */
+export const LOCATION_ALIASES: Array<{ canonical: string; aliases: string[]; type: 'region' | 'district' | 'block' }> = [
+  { canonical: 'منطقة الجامعات والمعاهد', aliases: ['منطقة الجامعات والمعاهد', 'الجامعات والمعاهد'], type: 'region' },
+  { canonical: 'الإسكان العائلي', aliases: ['الإسكان العائلي', 'الاسكان العائلي'], type: 'region' },
+  { canonical: 'وصال فيوز', aliases: ['وصال فيوز', 'wesal views'], type: 'district' },
+  { canonical: 'وصال ريزيدنس', aliases: ['وصال ريزيدنس', 'wesal residence'], type: 'district' },
+  { canonical: 'بيت الوطن', aliases: ['بيت الوطن', 'beit el watan'], type: 'region' },
+  { canonical: 'النرجس', aliases: ['حي النرجس', 'النرجس'], type: 'district' },
+  { canonical: 'امتداد النرجس', aliases: ['امتداد النرجس'], type: 'district' },
+  { canonical: 'البنفسج', aliases: ['حي البنفسج', 'البنفسج'], type: 'district' },
+  { canonical: 'الياسمين', aliases: ['حي الياسمين', 'الياسمين'], type: 'district' },
+  { canonical: 'اللوتس الشمالية', aliases: ['اللوتس الشمالية'], type: 'district' },
+  { canonical: 'اللوتس الجنوبية', aliases: ['اللوتس الجنوبية'], type: 'district' },
+  { canonical: 'القرنفل', aliases: ['حي القرنفل', 'القرنفل'], type: 'district' },
+  { canonical: 'الأندلس', aliases: ['حي الأندلس', 'الأندلس'], type: 'district' },
+  { canonical: 'الشويفات', aliases: ['حي الشويفات', 'الشويفات'], type: 'district' },
+  { canonical: 'جنوب الأكاديمية', aliases: ['حي جنوب الأكاديمية', 'جنوب الأكاديمية'], type: 'district' },
+  { canonical: 'أبو الهول', aliases: ['حي أبو الهول', 'أبو الهول'], type: 'district' },
+  { canonical: 'تمر حنة', aliases: ['حي تمر حنة', 'تمر حنة'], type: 'district' },
+  { canonical: 'غرب أرابيلا', aliases: ['غرب أرابيلا'], type: 'district' },
+  { canonical: 'المستثمرين الشمالية', aliases: ['المستثمرين الشمالية'], type: 'district' },
+  { canonical: 'المستثمرين الجنوبية', aliases: ['المستثمرين الجنوبية'], type: 'district' },
+  { canonical: 'غرب الجولف', aliases: ['غرب الجولف'], type: 'district' },
+  { canonical: 'الدبلوماسيين', aliases: ['الدبلوماسيين'], type: 'district' },
+  { canonical: 'حي السفارات', aliases: ['حي السفارات', 'السفارات'], type: 'district' },
+  { canonical: 'حي الواحة', aliases: ['حي الواحة', 'الواحة'], type: 'district' },
+  { canonical: 'زهراء مدينة نصر', aliases: ['زهراء مدينة نصر'], type: 'district' },
+  { canonical: 'الحي السويسري', aliases: ['الحي السويسري'], type: 'district' },
+  { canonical: 'الوفاء والأمل', aliases: ['الوفاء والأمل'], type: 'district' },
+  { canonical: 'الحي المتميز', aliases: ['الحي المتميز'], type: 'district' },
+  { canonical: 'الحي الاقتصادي', aliases: ['الحي الاقتصادي'], type: 'district' },
+  { canonical: 'مناطق الإسكان الاجتماعي', aliases: ['مناطق الإسكان الاجتماعي', 'الإسكان الاجتماعي'], type: 'region' },
+  { canonical: 'مناطق الإسكان المتميز', aliases: ['مناطق الإسكان المتميز', 'الإسكان المتميز'], type: 'region' },
+  ...Array.from({ length: 11 }, (_, index) => ({ canonical: `المنطقة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة','السادسة','السابعة','الثامنة','التاسعة','العاشرة','الحادية عشرة'][index]}`, aliases: [`المنطقة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة','السادسة','السابعة','الثامنة','التاسعة','العاشرة','الحادية عشرة'][index]}`], type: 'region' as const })),
+  ...Array.from({ length: 9 }, (_, index) => ({ canonical: `الحي ${['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن','التاسع'][index]}`, aliases: [`الحي ${['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن','التاسع'][index]}`], type: 'district' as const })),
+  ...Array.from({ length: 15 }, (_, index) => ({ canonical: `B${index + 1}`, aliases: [`B${index + 1}`, `بلوك ${index + 1}`, `بلوك B${index + 1}`], type: 'block' as const })),
+]
 
 export const CATEGORY_ALIASES: CanonicalMap[] = buildMap(
   [
@@ -239,7 +284,7 @@ export const LISTING_TYPE_ALIASES: CanonicalMap[] = buildMap(
 export const CURRENCY_ALIASES: CanonicalMap[] = buildMap(
   [
     { canonical: 'جنيه مصري', aliases: ['جنيه مصرى', 'جنيه', 'ج.م', 'ج م', 'EGP', 'LE'] },
-    { canonical: 'دولار أمر����كي', aliases: ['الدولار الأمريكي', 'دولار امريكي', 'دولار', 'USD', '$'] },
+    { canonical: 'دولار أمر����كي', aliases: ['الدولار الأ��ريكي', 'دولار امريكي', 'دولار', 'USD', '$'] },
     { canonical: 'ريال سعودي', aliases: ['ريال سعودى', 'ريال', 'SAR'] },
     { canonical: 'درهم إمارات��', aliases: ['درهم اماراتي', 'درهم', 'AED'] },
     { canonical: 'يورو', aliases: ['EUR', '€'] },
