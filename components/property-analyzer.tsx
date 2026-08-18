@@ -45,6 +45,10 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
     () => propertyFields.filter((field) => field.required && !record[field.key].trim()),
     [record],
   )
+  const hasExportableData = useMemo(
+    () => Object.values(record).some((value) => value.trim().length > 0),
+    [record],
+  )
   const completionFields = [
     'code', 'type', 'category', 'price', 'size', 'beds', 'baths',
     'floor', 'finishing', 'view', 'remainingAmount', 'installmentCount',
@@ -157,7 +161,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
               <p className="mt-0.5 hidden max-w-[420px] truncate text-xs text-muted-foreground sm:block">تنظيم التفاصيل العقارية وتوزيعها في خانات جاهزة للتصدير</p>
             </div>
           </div>
-          <div className="flex w-full items-center gap-2 overflow-x-auto sm:w-auto sm:justify-end">
+          <div className="flex w-full items-center gap-2 overflow-visible sm:w-auto sm:justify-end">
             <div className="flex shrink-0 items-center gap-1 rounded-xl border border-border/70 bg-card/55 p-1 shadow-sm">
               <ThemeToggle />
             </div>
@@ -178,7 +182,7 @@ export function PropertyAnalyzer({ activeAgentName }: PropertyAnalyzerProps) {
               <span className="hidden md:inline">بدء عقار جديد</span>
               <span className="md:hidden">جديد</span>
             </button>
-            <div className="shrink-0"> <ExportMenu record={record} disabled={!record.title.trim()} /> </div>
+            <div className="shrink-0"> <ExportMenu record={record} disabled={!hasExportableData} /> </div>
           </div>
         </div>
       </header>
